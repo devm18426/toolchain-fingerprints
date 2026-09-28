@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fingerprint.schema.json",
+  "title": "Cross-toolchain ABI fingerprints",
+  "x-version": "2.0",
+  "description": "The only contract between the generator and the web page. Versioning: adding an optional field is a minor bump; renaming, removing, or changing a field's type or enum is a major bump. The page refuses a major version it does not know.",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "toolchains"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^2\\.[0-9]+$" },
+    "generated_at": { "type": "string", "description": "Informational only; consumers must not use it." },
+    "toolchains": { "type": "array", "items": { "$ref": "#/$defs/record" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "soname": { "type": "string", "pattern": "^[^/\\s]*$" },
+    "record": {
+      "type": "object",
+      "required": [
+        "tc_id", "triple", "gcc_version", "libc", "ldso", "interp", "elf", "isa",
+        "float_abi", "pie_default", "needed", "dynamic_ok", "static_ok"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tc_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+        "triple": { "type": "string" },
+        "gcc_version": { "type": "string" },
+        "libc": {
+          "type": "object",
+          "required": ["kind", "soname"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["glibc", "musl", "uclibc", "unknown"] },
+            "soname": { "$ref": "#/$defs/soname" }
+          }
+        },
+        "ldso": {
+          "type": "object",
+          "required": ["soname"],
+          "additionalProperties": false,
+          "properties": {
+            "soname": { "$ref": "#/$defs/soname", "description": "SONAME of the sysroot's own loader. May differ from basename(interp): the classic ld-uClibc.so.1 vs .so.0 trap." }
+          }
+        },
+        "interp": { "type": "string", "description": "PT_INTERP of a dynamically linked probe binary; empty if dynamic linking failed." },
+        "elf": {
+          "type": "object",
+          "required": ["class", "endian", "machine"],
+          "additionalProperties": false,
+          "properties": {
+            "class": { "enum": ["32", "64"] },
+            "endian": { "enum": ["big", "little"] },
+            "machine": { "type": "string" }
+          }
+        },
+        "isa": { "type": "string", "description": "ISA line from readelf -A on the probe binary; empty if the arch has none." },
+        "float_abi": { "enum": ["hard", "soft", "softfp", "unknown"] },
+        "pie_default": { "type": "boolean", "description": "true if a plain link produces ET_DYN (PIE) by default." },
+        "needed": { "type": "array", "items": { "$ref": "#/$defs/soname" } },
+        "dynamic_ok": { "type": "boolean" },
+        "static_ok": { "type": "boolean" },
+        "raw": {
+          "type": "object",
+          "description": "Unnormalized source strings, for debugging only. Consumers must not match on these.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

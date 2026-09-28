@@ -1,5 +1,0 @@
-[
-  {"tc_id":"mips32-musl-2026.08","triple":"mips-buildroot-linux-musl","gcc":"15.3.0","libc_kind":"musl","elf_class":"ELF32","endian":"big endian","machine":"MIPS R3000","isa":"MIPS32","float":"Hard float","default_type":"DYN","interp":"/lib/ld-musl-mips.so.1","needed":"libc.so","ldso_soname":"","libc_soname":"ld-musl-mips.so.1","dynamic_ok":true,"static_ok":true},
-  {"tc_id":"mips32-uclibc-2017.11","triple":"mips-buildroot-linux-uclibc","gcc":"7.2.0","libc_kind":"uclibc","elf_class":"ELF32","endian":"big endian","machine":"MIPS R3000","isa":"MIPS32","float":"Hard float","default_type":"EXEC","interp":"/lib/ld-uClibc.so.0","needed":"libc.so.0","ldso_soname":"ld-uClibc.so.1","libc_soname":"libc.so.0","dynamic_ok":true,"static_ok":true},
-  {"tc_id":"mips32-uclibc-2026.08","triple":"mips-buildroot-linux-uclibc","gcc":"15.3.0","libc_kind":"uclibc","elf_class":"ELF32","endian":"big endian","machine":"MIPS R3000","isa":"MIPS32","float":"Hard float","default_type":"DYN","interp":"/lib/ld-uClibc.so.0","needed":"libc.so.0","ldso_soname":"ld-uClibc.so.1","libc_soname":"libc.so.0","dynamic_ok":true,"static_ok":true}
-]

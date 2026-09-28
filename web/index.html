@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross-toolchain ABI fingerprints</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1d21; --muted:#5b6570; --line:#e2e6ea;
+    --card:#f6f8fa; --ok:#137333; --okbg:#e6f4ea; --no:#a50e0e; --nobg:#fce8e6;
+    --risk:#8a6d00; --riskbg:#fff4d6; --accent:#0b57d0;
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --bg:#14171a; --fg:#e6e9ec; --muted:#9aa4ae; --line:#2b3138;
+    --card:#1c2126; --ok:#7ee2a8; --okbg:#12301f; --no:#f2a9a2; --nobg:#3a1614;
+    --risk:#e8c65b; --riskbg:#332a0d; --accent:#7ca8f5;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14171a; --fg:#e6e9ec; --muted:#9aa4ae; --line:#2b3138;
+    --card:#1c2126; --ok:#7ee2a8; --okbg:#12301f; --no:#f2a9a2; --nobg:#3a1614;
+    --risk:#e8c65b; --riskbg:#332a0d; --accent:#7ca8f5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:0 16px}
+  .wrap{max-width:1280px;margin:0 auto;padding:24px 0 64px}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 20px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:20px}
+  .panel h2{font-size:1rem;margin:0 0 12px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+  .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px}
+  label{font-size:.8rem;color:var(--muted)}
+  input,select{background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:inherit;font-size:.9rem}
+  input[type=search]{width:100%}
+  textarea{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;resize:vertical}
+  details.rawbox{margin-top:14px}
+  details.rawbox summary{cursor:pointer;color:var(--accent);font-size:.85rem;margin-bottom:8px}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:6px}
+  button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:.85rem}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+  th{position:sticky;top:0;background:var(--card);cursor:pointer;user-select:none}
+  td.mono,code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem}
+  td.why{white-space:normal;min-width:240px;max-width:420px;font-size:.8rem}
+  td.why ul{margin:0;padding-left:16px}
+  td.why li.no{color:var(--no)} td.why li.risk{color:var(--risk)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
+  .b-ok{background:var(--okbg);color:var(--ok)} .b-no{background:var(--nobg);color:var(--no)} .b-risk{background:var(--riskbg);color:var(--risk)}
+  .count{color:var(--muted);font-size:.85rem;margin:10px 2px}
+  .error{background:var(--nobg);color:var(--no);border-radius:10px;padding:12px 16px;margin-bottom:20px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cross-toolchain ABI fingerprints</h1>
+  <p class="sub">What each cross toolchain's binaries need at runtime, so you can pick one that matches your target without deploying to find out.</p>
+  <div id="loaderr" class="error" hidden></div>
+
+  <div class="panel">
+    <h2>Match a target</h2>
+    <div class="row" id="targetfields"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="match">Match</button>
+      <button class="ghost" id="clear">Clear</button>
+    </div>
+    <details class="rawbox">
+      <summary>… or paste raw output from the target</summary>
+      <textarea id="raw" rows="7" placeholder="Paste any of these, from the target or from a binary that already runs on it:
+
+  readelf -h -l -d /bin/busybox     (interp, NEEDED, endianness)
+  ls /lib                           (sonames the target provides)
+  uname -r                          (kernel version)"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="parse">Parse into fields</button>
+        <span class="hint" id="parseout" style="margin:0"></span>
+      </div>
+    </details>
+    <div class="hint">Each row is <b class="badge b-ok">OK</b>, <b class="badge b-risk">RISKY</b> or <b class="badge b-no">NO</b>, with the reasons listed next to it. Rules only fire for target facts you filled in.</div>
+  </div>
+
+  <div class="row" style="margin-bottom:10px">
+    <div class="field"><input type="search" id="q" placeholder="Filter table (triple, libc, isa, soname, ...)"></div>
+  </div>
+  <div class="count" id="count"></div>
+  <div class="tablewrap">
+    <table id="t"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table>
+  </div>
+  <p class="sub" style="margin-top:16px">Dataset: <code>fingerprints.json</code>, schema <code id="ver">?</code>. Each record is computed once from a pinned toolchain Dockerfile.</p>
+</div>
+
+<script>
+// ---- contract ------------------------------------------------------------
+const SUPPORTED_MAJOR = 2;           // refuse any other major version of the schema
+
+// ---- field helpers -------------------------------------------------------
+const get = (r, path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), r);
+const base = p => (p || "").split("/").pop();
+const splitList = s => (s || "").split(/[,\s]+/).map(x => x.trim()).filter(Boolean);
+const fmt = v => v === "" || v == null ? "—" : Array.isArray(v) ? (v.length ? v.join(", ") : "—")
+               : typeof v === "boolean" ? (v ? "yes" : "no") : String(v);
+
+// ---- table columns: [schema field path, header, css class] -------------
+// Adding a schema field to the table is one line here.
+const COLS = [
+  ["tc_id", "toolchain"], ["triple", "triple", "mono"], ["libc.kind", "libc"],
+  ["gcc_version", "gcc"], ["elf.endian", "endian"], ["isa", "isa"], ["float_abi", "float"],
+  ["pie_default", "PIE"], ["interp", "interp", "mono"], ["needed", "needed", "mono"],
+  ["ldso.soname", "ldso soname", "mono"], ["libc.soname", "libc soname", "mono"],
+  ["static_ok", "static"],
+];
+
+// ---- target facts the user can supply -----------------------------------
+const TARGET = [
+  {id: "interp",   label: "Loader / interp (readelf -l on a target binary)", ph: "/lib/ld-uClibc.so.0"},
+  {id: "provides", label: "Sonames the target provides (ls /lib)",           ph: "libc.so.0, ld-uClibc.so.0"},
+];
+
+// ---- match rules: pure (record, target) -> [{level, text}] --------------
+// Each rule only fires when the target facts it needs are present.
+function provides(t, soname, r){
+  if (t.provides.has(soname)) return true;
+  // musl: libc.so IS the loader; a target with the musl loader satisfies it
+  if (r.libc.kind === "musl" && soname === "libc.so" && [...t.provides, base(t.interp)].some(s => /^ld-musl-/.test(s))) return true;
+  return false;
+}
+const RULES = [
+  {needs: ["interp"], check: (r, t) =>
+    r.interp && r.interp !== t.interp
+      ? [{level: "NO", text: `loader is ${r.interp}, target has ${t.interp}`}] : []},
+  {needs: ["provides"], check: (r, t) =>
+    r.needed.filter(n => !provides(t, n, r))
+      .map(n => ({level: "NO", text: `needs ${n}, target lacks it`}))},
+  {needs: ["provides"], check: (r, t) => {
+    const l = r.ldso.soname;
+    return l && !t.provides.has(l) && l !== base(t.interp)
+      ? [{level: "RISKY", text: `larger or hardened builds can pull in ${l} as NEEDED; target lacks it`}] : [];
+  }},
+];
+
+function matchRecord(r, t){
+  const have = k => k === "provides" ? t.provides.size > 0 : !!t[k];
+  const active = RULES.filter(rule => rule.needs.every(have));
+  if (!active.length) return null;
+  const reasons = active.flatMap(rule => rule.check(r, t));
+  const verdict = reasons.some(x => x.level === "NO") ? "NO" : reasons.length ? "RISKY" : "OK";
+  return {verdict, reasons};
+}
+
+// ---- UI --------------------------------------------------------------------
+let DATA = [], sortKey = null, sortDir = 1, results = {};
+const $ = id => document.getElementById(id);
+
+function buildTargetFields(){
+  const box = $("targetfields");
+  TARGET.forEach(f => {
+    const d = document.createElement("div"); d.className = "field";
+    d.innerHTML = `<label for="t_${f.id}"></label><input id="t_${f.id}">`;
+    d.querySelector("label").textContent = f.label;
+    d.querySelector("input").placeholder = f.ph;
+    box.appendChild(d);
+  });
+}
+
+function readTarget(){
+  const t = {};
+  TARGET.forEach(f => { t[f.id] = $("t_" + f.id).value.trim(); });
+  t.provides = new Set(splitList(t.provides));
+  return t;
+}
+
+function render(){
+  const q = $("q").value.toLowerCase();
+  const head = $("head"); head.innerHTML = "";
+  ["match", "why"].forEach(h => { const th = document.createElement("th"); th.textContent = h; head.appendChild(th); });
+  COLS.forEach(([k, label]) => {
+    const th = document.createElement("th"); th.textContent = label;
+    th.onclick = () => { sortDir = sortKey === k ? -sortDir : 1; sortKey = k; render(); };
+    head.appendChild(th);
+  });
+  let rows = DATA.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+  if (sortKey) rows.sort((a, b) => fmt(get(a, sortKey)).localeCompare(fmt(get(b, sortKey))) * sortDir);
+
+  const body = $("body"); body.innerHTML = "";
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    const res = results[r.tc_id];
+    const vtd = document.createElement("td"), wtd = document.createElement("td");
+    wtd.className = "why";
+    if (res){
+      const b = document.createElement("span");
+      b.className = "badge " + ({OK: "b-ok", RISKY: "b-risk", NO: "b-no"})[res.verdict];
+      b.textContent = res.verdict; vtd.appendChild(b);
+      if (res.reasons.length){
+        const ul = document.createElement("ul");
+        res.reasons.forEach(x => { const li = document.createElement("li"); li.className = x.level === "NO" ? "no" : "risk"; li.textContent = x.text; ul.appendChild(li); });
+        wtd.appendChild(ul);
+      }
+    }
+    tr.append(vtd, wtd);
+    COLS.forEach(([k, , cls]) => {
+      const td = document.createElement("td"); td.textContent = fmt(get(r, k));
+      if (cls) td.className = cls; tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  $("count").textContent = rows.length + " toolchain(s)";
+}
+
+function doMatch(){
+  const t = readTarget();
+  results = {};
+  DATA.forEach(r => { const m = matchRecord(r, t); if (m) results[r.tc_id] = m; });
+  render();
+}
+
+function parseRaw(){
+  const txt = $("raw").value, notes = [];
+  const mi = txt.match(/program interpreter:\s*([^\]\s]+)/i);
+  if (mi){ $("t_interp").value = mi[1]; notes.push("interp " + mi[1]); }
+  const prov = new Set(splitList($("t_provides").value)), before = prov.size;
+  let m, re = /\[([^\]\s]*\.so[^\]\s]*)\]/g;
+  while ((m = re.exec(txt))) prov.add(m[1]);
+  re = /(?:^|[\s/])((?:lib|ld)[A-Za-z0-9._+-]*\.so(?:\.[0-9]+)*)/g;
+  while ((m = re.exec(txt))) prov.add(m[1]);
+  $("t_provides").value = [...prov].sort().join(", ");
+  if (prov.size > before) notes.push((prov.size - before) + " soname(s)");
+  $("parseout").textContent = notes.length ? "parsed: " + notes.join(", ") : "nothing recognized";
+  doMatch();
+}
+
+function load(doc){
+  const v = String(doc && doc.schema_version || "");
+  const major = parseInt(v.split(".")[0], 10);
+  if (major !== SUPPORTED_MAJOR || !Array.isArray(doc.toolchains)){
+    $("loaderr").hidden = false;
+    DATA = []; render();
+    $("loaderr").textContent = `fingerprints.json has schema version "${v || "none"}"; this page only understands ${SUPPORTED_MAJOR}.x. Not showing verdicts that could be wrong.`;
+    return;
+  }
+  $("ver").textContent = v;
+  DATA = doc.toolchains;
+  render();
+}
+
+buildTargetFields();
+$("match").onclick = doMatch;
+$("parse").onclick = parseRaw;
+$("clear").onclick = () => { TARGET.forEach(f => $("t_" + f.id).value = ""); results = {}; render(); };
+$("q").addEventListener("input", render);
+
+// Published: fingerprints.json sits next to the page. In the repo: ../data/.
+fetch("fingerprints.json").then(r => r.ok ? r : fetch("../data/fingerprints.json"))
+  .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+  .then(load)
+  .catch(e => { $("loaderr").hidden = false; $("loaderr").textContent = "could not load fingerprints.json: " + e; });
+</script>
+</body>
+</html>

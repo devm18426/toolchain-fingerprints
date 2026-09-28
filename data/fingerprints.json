@@ -1,0 +1,102 @@
+{
+  "schema_version": "2.0",
+  "generated_at": "2026-09-28T22:44:02Z",
+  "toolchains": [
+    {
+      "tc_id": "mips32-musl-2026.08",
+      "triple": "mips-buildroot-linux-musl",
+      "gcc_version": "15.3.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-mips.so.1"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-mips.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "MIPS R3000"
+      },
+      "isa": "MIPS32",
+      "float_abi": "hard",
+      "pie_default": true,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "float": "hard float"
+      }
+    },
+    {
+      "tc_id": "mips32-uclibc-2017.11",
+      "triple": "mips-buildroot-linux-uclibc",
+      "gcc_version": "7.2.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "MIPS R3000"
+      },
+      "isa": "MIPS32",
+      "float_abi": "hard",
+      "pie_default": false,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "float": "hard float"
+      }
+    },
+    {
+      "tc_id": "mips32-uclibc-2026.08",
+      "triple": "mips-buildroot-linux-uclibc",
+      "gcc_version": "15.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "MIPS R3000"
+      },
+      "isa": "MIPS32",
+      "float_abi": "hard",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "float": "hard float"
+      }
+    }
+  ]
+}
