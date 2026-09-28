@@ -1,0 +1,42 @@
+name: pages
+
+# Publishes the web page and the committed dataset. It does NOT fingerprint
+# anything: records are computed once, locally, with generator/gen.py, and are
+# only redone when a toolchain Dockerfile or the probe changes. No schedule.
+
+on:
+  push: { branches: [main] }
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency: { group: pages, cancel-in-progress: true }
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Dockerfiles
+        run: python3 generator/gen.py lint
+      - name: Validate dataset against the schema
+        run: python3 generator/gen.py validate
+      - name: Check every record is current
+        run: python3 generator/gen.py status
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp web/index.html data/fingerprints.json _site/
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: "${{ steps.dep.outputs.page_url }}" }
+    steps:
+      - id: dep
+        uses: actions/deploy-pages@v4

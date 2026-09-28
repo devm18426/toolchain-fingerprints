@@ -1,80 +1,64 @@
 # Cross-toolchain ABI fingerprints
 
-Pick a cross toolchain that will actually run on your target — without the
-build-it-and-see roulette.
+Answer one question without deploying to the device: *will a binary built by
+toolchain X run on target Y?*
 
 A cross toolchain's binaries carry a fixed set of runtime requirements: a
-**loader/interp** path, a **libc soname**, an **ISA**, an **endianness**, and a
-**float ABI**. If any of those don't match what your target provides in `/lib`,
-the binary won't run (wrong loader, missing `.so`, `SIGILL`, …). This project
-**fingerprints** those requirements per toolchain and lets you **match** them
-against a target you can inspect but can't easily rebuild (routers, IoT, old
-SoCs).
+loader path, libc sonames, an ISA, endianness, a float ABI. This project
+records those facts per toolchain and a static page compares them against what
+your target provides. See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
 
-## Why not just match libc version?
+## Layout
 
-Because version ≠ ABI. Two gotchas this catches that version-matching misses:
+| path | component | role |
+|---|---|---|
+| `schema/fingerprint.schema.json` | contract | the only thing the two components share |
+| `toolchains/<id>/Dockerfile` | generator | one fully pinned toolchain per directory |
+| `generator/probe/` | generator | `probe.sh` runs in the image; `normalize.py` turns its raw output into a record |
+| `generator/gen.py` | generator | lint, build, probe, merge, validate (stdlib Python only) |
+| `data/fingerprints.json` | output | the dataset, validated against the schema |
+| `web/index.html` | web page | reads only `fingerprints.json`; no build step |
 
-- A trivial `hello` **under-reports**: a hardened/large app can
-  pull in the toolchain's loader as an explicit `NEEDED` — `ld-uClibc.so.1` —
-  even when the target only ships `ld-uClibc.so.0`. So the fingerprint records
-  the **`ldso_soname`** from the toolchain's own sysroot as a risk flag, not just
-  what `hello` happens to need.
-- The float ABI (`hard`/`soft`/`softfp`) and exact ISA revision (`mips32` r1 vs
-  `mips32r2`) are recorded too — a `mips32r2` toolchain `SIGILL`s on an r1 core.
+## Generating records
 
-## Use it
+A pinned toolchain always produces the same binaries, so a record is computed
+once. It is redone only when the toolchain's Dockerfile or the probe changes;
+both are hashed into the record's `provenance`. There is no scheduled recheck.
 
-```sh
-# fingerprint every extracted toolchain under a directory (each exposes bin/<triple>-gcc)
-./fingerprint-dir.sh ./toolchains > fingerprints.json
-
-# or one toolchain
-TC_ID=my-tc ./probe-toolchain.sh /opt/my-tc/bin/mips-linux-gcc
-```
-
-Then open `site/index.html` (or the published GitHub Pages table), paste your
-target's loader and `/lib` sonames, and it flags each toolchain **OK / RISKY / NO**.
-
-Find your target's values on-device:
+One step per command:
 
 ```sh
-readelf -l /some/target/binary | grep interp    # -> the loader/interp
-ls /lib                                          # -> the sonames it provides
+python generator/gen.py status                    # what is up to date / stale
+python generator/gen.py build mips32-musl-2026.08 # docker build (RUN steps offline)
+python generator/gen.py probe mips32-musl-2026.08 # -> .cache/records/<id>.json
+python generator/gen.py merge                     # -> data/fingerprints.json
+python generator/gen.py validate                  # check against the schema
 ```
 
-## What a fingerprint looks like
+### Adding a toolchain
 
-```json
-{"tc_id":"mips32-uclibc-2017.11","triple":"mips-buildroot-linux-uclibc","gcc":"7.2.0",
- "libc_kind":"uclibc","elf_class":"ELF32","endian":"big endian","isa":"MIPS32",
- "float":"Hard float","default_type":"EXEC","interp":"/lib/ld-uClibc.so.0",
- "needed":"libc.so.0","ldso_soname":"ld-uClibc.so.1","libc_soname":"libc.so.0",
- "dynamic_ok":true,"static_ok":true}
+Create `toolchains/<id>/Dockerfile`. The generator refuses it (`gen.py lint`)
+unless every input is pinned:
+
+- every `FROM` is pinned by `@sha256:` digest;
+- the toolchain comes from exactly one `ADD --checksum=sha256:... <url>`;
+- nothing is read from the build context, and `RUN` does no downloads
+  (the build runs with `--network=none`, so it could not anyway);
+- `ENV TC_ID=<id>` (the directory name) and `ENV CC=<path to the cross gcc>`.
+
+Copy an existing Dockerfile and change the URL, checksum, `TC_ID` and `CC`.
+
+## Viewing
+
+```sh
+python -m http.server 8765
 ```
 
-## Publishing (GitHub Pages)
+then open <http://localhost:8765/web/>. Fill in your target's loader and
+`/lib` sonames (or paste `readelf`/`ls /lib` output) and each toolchain gets
+**OK / RISKY / NO** with the reasons. The page refuses a dataset whose schema
+major version it does not know.
 
-`.github/workflows/fingerprint.yml` populates `./toolchains` from the URLs in
-`toolchains.txt`, runs the fingerprinter, commits `fingerprints.json`, and
-deploys the table to Pages on push / weekly. Enable Pages (Settings → Pages →
-Source: GitHub Actions).
-
-The tool only ever reads local toolchain dirs; how they get there (the URL list,
-a cache, a committed dir, your own step) is up to the workflow.
-
-## Files
-
-| file | role |
-|---|---|
-| `probe-toolchain.sh` | fingerprint one toolchain → one JSON object |
-| `fingerprint-dir.sh` | fingerprint every toolchain under a dir → JSON array |
-| `fingerprints.json` | the dataset |
-| `site/index.html` | searchable table + target matcher (no build step) |
-| `toolchains.txt` | URL list the CI uses to populate `./toolchains` |
-| `.github/workflows/fingerprint.yml` | CI: fingerprint + publish |
-
-## Status / scope
-
-MIPS-first, expanding to other arches. Contributions of fingerprints for more
-toolchains welcome.
+`.github/workflows/pages.yml` publishes `web/index.html` next to
+`data/fingerprints.json` on push. It lints, validates and checks that every
+record is current, but never fingerprints anything itself.

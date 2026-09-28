@@ -1,7 +1,46 @@
 {
   "schema_version": "2.0",
-  "generated_at": "2026-09-28T22:44:02Z",
+  "generated_at": "2026-09-28T22:51:43Z",
   "toolchains": [
+    {
+      "tc_id": "mips32-glibc-2026.08",
+      "triple": "mips-buildroot-linux-gnu",
+      "gcc_version": "15.3.0",
+      "libc": {
+        "kind": "glibc",
+        "soname": "libc.so.6"
+      },
+      "ldso": {
+        "soname": "ld.so.1"
+      },
+      "interp": "/lib/ld.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "MIPS R3000"
+      },
+      "isa": "MIPS32",
+      "float_abi": "hard",
+      "pie_default": true,
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "float": "hard float"
+      },
+      "provenance": {
+        "dockerfile": "toolchains/mips32-glibc-2026.08/Dockerfile",
+        "dockerfile_sha256": "f88649ebccbb5aebc4cf86662cae69a3acccb48180058973614ca7527217b2da",
+        "image_digest": "sha256:68574fe76b38c5a25bab8c4b5eef8dab62870326a4cf440586376df07336c5b2",
+        "toolchain_sha256": "f3d2ca00826b5cf159a0486edf8179bbe3df10eb275acf332c6c0614ff8b8500",
+        "probe_version": "8b5a30f7c66d4f8c0f36690731965de7b7d70b4552789a6d7a65388a91bcd081"
+      }
+    },
     {
       "tc_id": "mips32-musl-2026.08",
       "triple": "mips-buildroot-linux-musl",
@@ -32,6 +71,13 @@
         "data": "2's complement, big endian",
         "type": "DYN (Position-Independent Executable file)",
         "float": "hard float"
+      },
+      "provenance": {
+        "dockerfile": "toolchains/mips32-musl-2026.08/Dockerfile",
+        "dockerfile_sha256": "432bac3a6942cc9490f4529d59a576d588b228b5701320979e13e78d71a87b27",
+        "image_digest": "sha256:2e2350f7e274e05330952df45fbfd8f404f8ce3e35731f83027f7d80e96e3759",
+        "toolchain_sha256": "0190387211125195f71b8397d02ccaaa15c6eb4ecbb94533d8a904065c0cc410",
+        "probe_version": "8b5a30f7c66d4f8c0f36690731965de7b7d70b4552789a6d7a65388a91bcd081"
       }
     },
     {
@@ -64,6 +110,13 @@
         "data": "2's complement, big endian",
         "type": "EXEC (Executable file)",
         "float": "hard float"
+      },
+      "provenance": {
+        "dockerfile": "toolchains/mips32-uclibc-2017.11/Dockerfile",
+        "dockerfile_sha256": "6feaf069299db77647de40b7bdc09f78596ab0244a5c03749f14bcb470e581e7",
+        "image_digest": "sha256:0190ad3ceaff6ee63af9e231c5fe66abc07bdf85a37f1f0443d3814716129f63",
+        "toolchain_sha256": "2c3e681918213d8dc1e71fbb347f1ae2e6f27f21a88709bdb09549a2bffdb2f7",
+        "probe_version": "8b5a30f7c66d4f8c0f36690731965de7b7d70b4552789a6d7a65388a91bcd081"
       }
     },
     {
@@ -96,6 +149,13 @@
         "data": "2's complement, big endian",
         "type": "DYN (Position-Independent Executable file)",
         "float": "hard float"
+      },
+      "provenance": {
+        "dockerfile": "toolchains/mips32-uclibc-2026.08/Dockerfile",
+        "dockerfile_sha256": "0462d77187a552cecc2a25f818a4b581003a5e8ab6f4b3f6c451a745762ac801",
+        "image_digest": "sha256:7f5c791bc58507418ef9c75767a2061fc40b5e48d6372f3ce1e429c4cd532d5a",
+        "toolchain_sha256": "bc4529aec62251d2dc59215944354b571dd8a66c4cfb17a552663f50a6d9e290",
+        "probe_version": "8b5a30f7c66d4f8c0f36690731965de7b7d70b4552789a6d7a65388a91bcd081"
       }
     }
   ]

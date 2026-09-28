@@ -47,7 +47,7 @@ fi
 soname(){ "$RE" -d "$1" 2>/dev/null | sed -n 's/.*(SONAME).*\[\(.*\)\]/\1/p' | head -1; }
 first_soname(){ for f in "$@"; do [ -e "$f" ] || continue; s="$(soname "$f")"; [ -n "$s" ] && { echo "$s"; return; }; done; }
 if [ -n "$sysroot" ]; then
-  put ldso_soname "$(first_soname "$sysroot"/lib/ld-*.so* "$sysroot"/lib/*/ld-*.so*)"
+  put ldso_soname "$(first_soname "$sysroot"/lib/ld-*.so* "$sysroot"/lib/ld.so* "$sysroot"/lib/ld64.so* "$sysroot"/lib/*/ld-*.so*)"
   put libc_soname "$(first_soname "$sysroot"/lib/libc.so* "$sysroot"/lib/libuClibc*.so "$sysroot"/lib/*/libc.so*)"
 fi
 
