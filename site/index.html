@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross-toolchain ABI fingerprints</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1d21; --muted:#5b6570; --line:#e2e6ea;
+    --card:#f6f8fa; --ok:#137333; --okbg:#e6f4ea; --no:#a50e0e; --nobg:#fce8e6;
+    --risk:#8a6d00; --riskbg:#fff4d6; --accent:#0b57d0;
+  }
+  :root:not([data-theme="light"]){ @media (prefers-color-scheme:dark){
+    --bg:#14171a; --fg:#e6e9ec; --muted:#9aa4ae; --line:#2b3138;
+    --card:#1c2126; --ok:#7ee2a8; --okbg:#12301f; --no:#f2a9a2; --nobg:#3a1614;
+    --risk:#e8c65b; --riskbg:#332a0d; --accent:#7ca8f5;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14171a; --fg:#e6e9ec; --muted:#9aa4ae; --line:#2b3138;
+    --card:#1c2126; --ok:#7ee2a8; --okbg:#12301f; --no:#f2a9a2; --nobg:#3a1614;
+    --risk:#e8c65b; --riskbg:#332a0d; --accent:#7ca8f5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:0 16px}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 0 64px}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 20px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:20px}
+  .panel h2{font-size:1rem;margin:0 0 12px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+  .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px}
+  label{font-size:.8rem;color:var(--muted)}
+  input{background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:inherit;font-size:.9rem}
+  input[type=search]{width:100%}
+  textarea{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;resize:vertical}
+  details.rawbox{margin-top:14px}
+  details.rawbox summary{cursor:pointer;color:var(--accent);font-size:.85rem;margin-bottom:8px}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:6px}
+  button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:.85rem}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:var(--card);cursor:pointer;user-select:none}
+  td.mono,code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem}
+  tr[data-verdict]{}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
+  .b-ok{background:var(--okbg);color:var(--ok)} .b-no{background:var(--nobg);color:var(--no)} .b-risk{background:var(--riskbg);color:var(--risk)}
+  .count{color:var(--muted);font-size:.85rem;margin:10px 2px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cross-toolchain ABI fingerprints</h1>
+  <p class="sub">What each cross toolchain's binaries need at runtime (loader, libc soname, ISA, endianness, float ABI) — so you can pick one that matches your target without deploying to find out.</p>
+
+  <div class="panel">
+    <h2>Match a target</h2>
+    <div class="row">
+      <div class="field">
+        <label for="ti">Target loader / interp (from <code>readelf -l</code> on a target binary)</label>
+        <input id="ti" placeholder="/lib/ld-uClibc.so.0">
+      </div>
+      <div class="field">
+        <label for="tp">Libraries the target provides (<code>ls /lib</code> sonames, comma-separated)</label>
+        <input id="tp" placeholder="libc.so.0, libcrypt.so.0">
+      </div>
+      <button id="match">Match</button>
+      <button class="ghost" id="clear">Clear</button>
+    </div>
+    <details class="rawbox">
+      <summary>… or paste raw output from the target (readelf -l / readelf -d / ls /lib)</summary>
+      <textarea id="raw" rows="6" placeholder="Paste from a binary that already runs on the target, and/or its /lib listing, e.g.:
+
+  [Requesting program interpreter: /lib/ld-uClibc.so.0]
+  0x00000001 (NEEDED)   Shared library: [libc.so.0]
+  0x00000001 (NEEDED)   Shared library: [libgcc_s.so.1]
+
+  $ ls /lib
+  libc.so.0  libcrypt.so.0  ld-uClibc.so.0  libgcc_s.so.1"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="parse">Parse into fields</button>
+        <span class="hint" id="parseout" style="margin:0"></span>
+      </div>
+      <div class="hint">Pulls the <b>interp</b> from a <code>program interpreter:</code> line and adds every soname it finds (<code>NEEDED […]</code> entries and bare <code>*.so*</code> tokens) to <b>provides</b>. Paste from a <i>target-native</i> binary — its needed libs are ones the target genuinely has.</div>
+    </details>
+    <div class="hint">A row is <b class="badge b-ok">OK</b> if its interp is your loader and every <code>needed</code> lib is provided. It's <b class="badge b-risk">RISKY</b> when a hardened/large build could still pull the toolchain's <code>ldso_soname</code>, which your target doesn't list (this is the classic <code>ld-uClibc.so.1</code> vs <code>.so.0</code> trap). <b class="badge b-no">NO</b> = wrong loader or a missing library.</div>
+  </div>
+
+  <div class="row" style="margin-bottom:10px">
+    <div class="field" style="flex:1">
+      <input type="search" id="q" placeholder="Filter table (triple, libc, isa, soname, ...)">
+    </div>
+  </div>
+  <div class="count" id="count"></div>
+  <div class="tablewrap">
+    <table id="t">
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:16px">Dataset: <code>fingerprints.json</code>, generated by <code>fingerprint-dir.sh</code> + <code>probe-toolchain.sh</code>. <a href="https://github.com/">source repo</a>.</p>
+</div>
+
+<script>
+const COLS = [
+  ["tc_id","toolchain"],["triple","triple"],["libc_kind","libc"],["gcc","gcc"],
+  ["isa","isa"],["endian","endian"],["float","float"],["default_type","type"],
+  ["interp","interp"],["needed","needed"],["ldso_soname","ldso_soname"],
+  ["libc_soname","libc_soname"],["static_ok","static"]
+];
+let DATA=[], sortKey=null, sortDir=1, verdicts={};
+
+function setList(s){ return new Set((s||"").split(/[,\s]+/).map(x=>x.trim()).filter(Boolean)); }
+function base(p){ return (p||"").split("/").pop(); }
+
+function verdictFor(row, interp, provided){
+  if(!interp && provided.size===0) return null;
+  if(interp && row.interp && row.interp!==interp) return "NO";
+  const needed=(row.needed||"").split(",").map(x=>x.trim()).filter(Boolean);
+  for(const n of needed){ if(!provided.has(n)) return "NO"; }
+  // loader-reference risk: a hardened/large app can add the toolchain's ldso soname as NEEDED
+  const ldso=row.ldso_soname;
+  if(ldso && !provided.has(ldso) && ldso!==base(interp)) return "RISKY";
+  return "OK";
+}
+
+function render(){
+  const q=document.getElementById("q").value.toLowerCase();
+  const head=document.getElementById("head"); head.innerHTML="";
+  const vth=document.createElement("th"); vth.textContent="match"; head.appendChild(vth);
+  COLS.forEach(([k,label])=>{ const th=document.createElement("th"); th.textContent=label;
+    th.onclick=()=>{ sortDir = sortKey===k? -sortDir : 1; sortKey=k; render(); }; head.appendChild(th); });
+
+  let rows=DATA.filter(r=>JSON.stringify(r).toLowerCase().includes(q));
+  if(sortKey) rows.sort((a,b)=>String(a[sortKey]).localeCompare(String(b[sortKey]))*sortDir);
+
+  const body=document.getElementById("body"); body.innerHTML="";
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const v=verdicts[r.tc_id];
+    const vtd=document.createElement("td");
+    if(v){ const b=document.createElement("span"); b.className="badge "+(v==="OK"?"b-ok":v==="RISKY"?"b-risk":"b-no"); b.textContent=v; vtd.appendChild(b); }
+    tr.appendChild(vtd);
+    COLS.forEach(([k])=>{ const td=document.createElement("td");
+      let val=r[k]; if(typeof val==="boolean") val=val?"yes":"no";
+      td.textContent=val===""||val==null?"—":val;
+      if(["triple","interp","needed","ldso_soname","libc_soname"].includes(k)) td.className="mono";
+      tr.appendChild(td); });
+    body.appendChild(tr);
+  });
+  document.getElementById("count").textContent=rows.length+" toolchain(s)";
+}
+
+function parseRaw(){
+  const t=document.getElementById("raw").value;
+  const notes=[];
+  // interp from `readelf -l`  (Requesting program interpreter: /path)
+  const mi=t.match(/program interpreter:\s*([^\]\s]+)/i);
+  if(mi){ document.getElementById("ti").value=mi[1]; notes.push("interp "+mi[1]); }
+  const provided=setList(document.getElementById("tp").value);
+  const before=provided.size;
+  // NEEDED [soname] from `readelf -d` (skip bracketed text with spaces, e.g. the interp line)
+  let m, re=/\[([^\]\s]*\.so[^\]\s]*)\]/g;
+  while((m=re.exec(t))) provided.add(m[1]);
+  // bare soname tokens (ls /lib, ldd, etc.): lib*.so* or ld-*.so*
+  re=/(?:^|[\s/])((?:lib|ld)[A-Za-z0-9._+-]*\.so(?:\.[0-9]+)*)/g;
+  while((m=re.exec(t))) provided.add(m[1]);
+  document.getElementById("tp").value=[...provided].sort().join(", ");
+  notes.push((provided.size-before)+" soname(s) added");
+  document.getElementById("parseout").textContent = mi||provided.size>before ? "parsed: "+notes.join(", ") : "nothing recognized — paste readelf -l/-d or ls /lib output";
+  doMatch();
+}
+
+function doMatch(){
+  const interp=document.getElementById("ti").value.trim();
+  const provided=setList(document.getElementById("tp").value);
+  verdicts={}; DATA.forEach(r=>{ const v=verdictFor(r,interp,provided); if(v) verdicts[r.tc_id]=v; });
+  render();
+}
+
+document.getElementById("match").onclick=doMatch;
+document.getElementById("parse").onclick=parseRaw;
+document.getElementById("clear").onclick=()=>{ document.getElementById("ti").value=""; document.getElementById("tp").value=""; verdicts={}; render(); };
+document.getElementById("q").addEventListener("input",render);
+
+fetch("fingerprints.json").then(r=>r.json()).then(d=>{ DATA=d; render(); })
+  .catch(e=>{ document.getElementById("count").textContent="could not load fingerprints.json: "+e; });
+</script>
+</body>
+</html>
