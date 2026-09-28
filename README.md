@@ -67,8 +67,9 @@ What the matcher checks:
 |---|---|
 | NO | wrong endianness or machine; different loader; a `hello` NEEDED lib missing; libc uses only `*_time64` syscalls and the kernel is older than 5.1; the kernel is below glibc's minimum; the program needs newer `GLIBC_` symbols than the target has |
 | RISKY | a library that real programs (pthreads, `select`, `dlopen`, libm) pull in is missing, e.g. `ld-uClibc.so.1`; only `DT_GNU_HASH` against a uClibc loader |
-| INFO | libc uses `*_time64` with fallback; kernel headers newer than the target kernel | The page refuses a dataset whose schema
-major version it does not know.
+| INFO | libc uses `*_time64` with fallback; kernel headers newer than the target kernel |
+
+The page refuses a dataset whose schema major version it does not know.
 
 `.github/workflows/pages.yml` publishes `web/index.html` next to
 `data/fingerprints.json` on push. It lints, validates and checks that every
