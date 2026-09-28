@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "fingerprint.schema.json",
   "title": "Cross-toolchain ABI fingerprints",
-  "x-version": "2.0",
+  "x-version": "2.1",
   "description": "The only contract between the generator and the web page. Versioning: adding an optional field is a minor bump; renaming, removing, or changing a field's type or enum is a major bump. The page refuses a major version it does not know.",
   "type": "object",
   "required": [
@@ -84,6 +84,10 @@
             },
             "soname": {
               "$ref": "#/$defs/soname"
+            },
+            "version": {
+              "$ref": "#/$defs/version",
+              "description": "uClibc-ng/musl/glibc release. Display and helper only: version is not ABI."
             }
           }
         },
@@ -140,7 +144,8 @@
             "soft",
             "softfp",
             "unknown"
-          ]
+          ],
+          "description": "From the ELF attributes/flags, not free text: MIPS FP ABI, ARM Tag_ABI_VFP_args / e_flags."
         },
         "pie_default": {
           "type": "boolean",
@@ -150,13 +155,168 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/soname"
-          }
+          },
+          "description": "NEEDED of a trivial hello program: the minimum any binary needs."
         },
         "dynamic_ok": {
           "type": "boolean"
         },
         "static_ok": {
           "type": "boolean"
+        },
+        "needed_corpus": {
+          "$ref": "#/$defs/sonames",
+          "description": "Union of NEEDED over the C probe corpus (pthreads, select/clock_gettime, dlopen, libm, 64-bit division): what real C programs pull in. The C++ corpus program only sets cxx_ok."
+        },
+        "sysroot_sonames": {
+          "$ref": "#/$defs/sonames",
+          "description": "Every SONAME shipped in the toolchain sysroot."
+        },
+        "cxx_ok": {
+          "type": "boolean",
+          "description": "A C++ compiler is present and linked the corpus program."
+        },
+        "march": {
+          "type": "string",
+          "description": "Compiler default -march (gcc -Q --help=target)."
+        },
+        "hash_style": {
+          "enum": [
+            "sysv",
+            "gnu",
+            "both",
+            "none"
+          ],
+          "description": "DT_HASH / DT_GNU_HASH in a default dynamic link. Old loaders only read DT_HASH."
+        },
+        "time": {
+          "type": "object",
+          "required": [
+            "time_t_bits",
+            "time64_syscalls"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "time_t_bits": {
+              "enum": [
+                32,
+                64
+              ]
+            },
+            "time64_syscalls": {
+              "enum": [
+                "none",
+                "fallback",
+                "required",
+                "unknown"
+              ],
+              "description": "none: only legacy time syscalls. fallback: tries *_time64 (Linux >= 5.1) and falls back on ENOSYS. required: *_time64 only, fails with ENOSYS before Linux 5.1."
+            }
+          }
+        },
+        "kernel": {
+          "type": "object",
+          "required": [
+            "headers",
+            "min"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "headers": {
+              "$ref": "#/$defs/version",
+              "description": "Sysroot kernel headers version: an upper bound on syscalls the libc may use."
+            },
+            "min": {
+              "$ref": "#/$defs/version",
+              "description": "Minimum kernel the libc enforces at startup (glibc ELF ABI note); empty if none."
+            }
+          }
+        },
+        "glibc": {
+          "type": "object",
+          "required": [
+            "requires",
+            "provides"
+          ],
+          "additionalProperties": false,
+          "description": "glibc records only.",
+          "properties": {
+            "requires": {
+              "$ref": "#/$defs/version",
+              "description": "Highest GLIBC_x.y symbol version the probe corpus needs."
+            },
+            "provides": {
+              "$ref": "#/$defs/version",
+              "description": "Highest GLIBC_x.y the sysroot libc defines."
+            }
+          }
+        },
+        "mips": {
+          "type": "object",
+          "required": [
+            "isa_level",
+            "nan",
+            "fp_abi",
+            "mips16",
+            "micromips"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "isa_level": {
+              "type": "string",
+              "description": "From e_flags EF_MIPS_ARCH, e.g. mips32, mips32r2."
+            },
+            "nan": {
+              "enum": [
+                "legacy",
+                "2008"
+              ],
+              "description": "e_flags EF_MIPS_NAN2008. A mismatch is refused by the kernel/loader."
+            },
+            "fp_abi": {
+              "enum": [
+                "double",
+                "single",
+                "soft",
+                "old-64",
+                "xx",
+                "64",
+                "64a",
+                "any",
+                "unknown"
+              ]
+            },
+            "mips16": {
+              "type": "boolean"
+            },
+            "micromips": {
+              "type": "boolean"
+            }
+          }
+        },
+        "arm": {
+          "type": "object",
+          "required": [
+            "eabi",
+            "vfp_args"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "eabi": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "vfp_args": {
+              "enum": [
+                "base",
+                "vfp",
+                "toolchain",
+                "compatible",
+                "none"
+              ],
+              "description": "Tag_ABI_VFP_args: vfp = hard-float calling convention."
+            }
+          }
         },
         "provenance": {
           "type": "object",
@@ -198,6 +358,17 @@
             "type": "string"
           }
         }
+      }
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^([0-9]+(\\.[0-9]+)*)?$",
+      "description": "Dotted version, or empty if unknown."
+    },
+    "sonames": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/soname"
       }
     }
   }

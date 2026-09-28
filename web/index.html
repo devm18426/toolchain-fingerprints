@@ -45,7 +45,7 @@
   td.mono,code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem}
   td.why{white-space:normal;min-width:240px;max-width:420px;font-size:.8rem}
   td.why ul{margin:0;padding-left:16px}
-  td.why li.no{color:var(--no)} td.why li.risk{color:var(--risk)}
+  td.why li.no{color:var(--no)} td.why li.risk{color:var(--risk)} td.why li.info{color:var(--muted)}
   .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
   .b-ok{background:var(--okbg);color:var(--ok)} .b-no{background:var(--nobg);color:var(--no)} .b-risk{background:var(--riskbg);color:var(--risk)}
   .count{color:var(--muted);font-size:.85rem;margin:10px 2px}
@@ -70,8 +70,8 @@
       <summary>… or paste raw output from the target</summary>
       <textarea id="raw" rows="7" placeholder="Paste any of these, from the target or from a binary that already runs on it:
 
-  readelf -h -l -d /bin/busybox     (interp, NEEDED, endianness)
-  ls /lib                           (sonames the target provides)
+  readelf -h -l -d /bin/busybox     (interp, NEEDED, endianness, machine)
+  ls /lib                           (sonames, and libc-2.x.so for glibc)
   uname -r                          (kernel version)"></textarea>
       <div class="row" style="margin-top:8px">
         <button id="parse">Parse into fields</button>
@@ -103,30 +103,53 @@ const fmt = v => v === "" || v == null ? "—" : Array.isArray(v) ? (v.length ? 
                : typeof v === "boolean" ? (v ? "yes" : "no") : String(v);
 
 // ---- table columns: [schema field path, header, css class] -------------
-// Adding a schema field to the table is one line here.
+// Adding a schema field to the table is one line here. Fields added in a
+// minor schema version may be missing from older data; they show as "—".
 const COLS = [
   ["tc_id", "toolchain"], ["triple", "triple", "mono"], ["libc.kind", "libc"],
-  ["gcc_version", "gcc"], ["elf.endian", "endian"], ["isa", "isa"], ["float_abi", "float"],
-  ["pie_default", "PIE"], ["interp", "interp", "mono"], ["needed", "needed", "mono"],
+  ["libc.version", "libc ver"], ["gcc_version", "gcc"],
+  ["elf.machine", "machine"], ["elf.endian", "endian"], ["march", "-march"], ["isa", "isa"],
+  ["float_abi", "float"], ["mips.fp_abi", "MIPS FP ABI"], ["mips.nan", "NaN"], ["arm.vfp_args", "ARM VFP args"],
+  ["time.time_t_bits", "time_t bits"], ["time.time64_syscalls", "time64 syscalls"],
+  ["kernel.headers", "kernel headers"], ["kernel.min", "min kernel"],
+  ["glibc.requires", "needs GLIBC_"], ["glibc.provides", "has GLIBC_"],
+  ["pie_default", "PIE"], ["hash_style", "hash"], ["interp", "interp", "mono"],
+  ["needed", "needed (hello)", "mono"], ["needed_corpus", "needed (real programs)", "mono"],
   ["ldso.soname", "ldso soname", "mono"], ["libc.soname", "libc soname", "mono"],
-  ["static_ok", "static"],
+  ["static_ok", "static"], ["cxx_ok", "C++"],
 ];
 
 // ---- target facts the user can supply -----------------------------------
 const TARGET = [
   {id: "interp",   label: "Loader / interp (readelf -l on a target binary)", ph: "/lib/ld-uClibc.so.0"},
   {id: "provides", label: "Sonames the target provides (ls /lib)",           ph: "libc.so.0, ld-uClibc.so.0"},
+  {id: "kernel",   label: "Kernel version (uname -r)",                        ph: "3.18.140"},
+  {id: "endian",   label: "Endianness (readelf -h: Data)",                    ph: "big or little"},
+  {id: "machine",  label: "Machine (readelf -h: Machine)",                    ph: "MIPS R3000"},
+  {id: "glibc",    label: "Target glibc version, if glibc",                   ph: "2.19"},
 ];
 
 // ---- match rules: pure (record, target) -> [{level, text}] --------------
 // Each rule only fires when the target facts it needs are present.
+// Levels: NO and RISKY set the verdict; INFO is shown but never changes it.
+const vkey = v => (String(v || "").match(/\d+/g) || []).map(Number);
+const vcmp = (a, b) => { const x = vkey(a), y = vkey(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++){ const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
+
 function provides(t, soname, r){
-  if (t.provides.has(soname)) return true;
+  if (t.provides.has(soname) || soname === base(t.interp)) return true;
   // musl: libc.so IS the loader; a target with the musl loader satisfies it
   if (r.libc.kind === "musl" && soname === "libc.so" && [...t.provides, base(t.interp)].some(s => /^ld-musl-/.test(s))) return true;
   return false;
 }
 const RULES = [
+  {needs: ["endian"], check: (r, t) => {
+    const e = /little/i.test(t.endian) ? "little" : /big/i.test(t.endian) ? "big" : "";
+    return e && r.elf.endian !== e ? [{level: "NO", text: `binaries are ${r.elf.endian}-endian, target is ${e}-endian (exec format error)`}] : [];
+  }},
+  {needs: ["machine"], check: (r, t) =>
+    r.elf.machine.toLowerCase() !== t.machine.toLowerCase()
+      ? [{level: "NO", text: `binaries are for ${r.elf.machine}, target is ${t.machine}`}] : []},
   {needs: ["interp"], check: (r, t) =>
     r.interp && r.interp !== t.interp
       ? [{level: "NO", text: `loader is ${r.interp}, target has ${t.interp}`}] : []},
@@ -134,18 +157,47 @@ const RULES = [
     r.needed.filter(n => !provides(t, n, r))
       .map(n => ({level: "NO", text: `needs ${n}, target lacks it`}))},
   {needs: ["provides"], check: (r, t) => {
-    const l = r.ldso.soname;
-    return l && !t.provides.has(l) && l !== base(t.interp)
-      ? [{level: "RISKY", text: `larger or hardened builds can pull in ${l} as NEEDED; target lacks it`}] : [];
+    if (!r.needed_corpus){             // schema 2.0 data: fall back to the loader-soname heuristic
+      const l = r.ldso.soname;
+      return l && !provides(t, l, r)
+        ? [{level: "RISKY", text: `larger or hardened builds can pull in ${l} as NEEDED; target lacks it`}] : [];
+    }
+    return r.needed_corpus.filter(n => !r.needed.includes(n) && !provides(t, n, r))
+      .map(n => ({level: "RISKY", text: `programs using pthreads, select, dlopen or libm also need ${n}; target lacks it`}));
   }},
+  {needs: ["kernel"], check: (r, t) => {
+    const s = r.time && r.time.time64_syscalls;
+    if (s === "required" && vcmp(t.kernel, "5.1") < 0)
+      return [{level: "NO", text: `libc uses only the *_time64 syscalls (Linux 5.1+); on ${t.kernel} select, clock_gettime and friends fail with ENOSYS`}];
+    if (s === "fallback" && vcmp(t.kernel, "5.1") < 0)
+      return [{level: "INFO", text: `libc tries *_time64 syscalls and falls back to the legacy ones on ${t.kernel}`}];
+    return [];
+  }},
+  {needs: ["kernel"], check: (r, t) => {
+    const m = r.kernel && r.kernel.min;
+    return m && vcmp(t.kernel, m) < 0
+      ? [{level: "NO", text: `libc refuses to start below Linux ${m} ("FATAL: kernel too old"); target runs ${t.kernel}`}] : [];
+  }},
+  {needs: ["kernel"], check: (r, t) => {
+    const h = r.kernel && r.kernel.headers;
+    return h && vcmp(h, t.kernel) > 0
+      ? [{level: "INFO", text: `built against Linux ${h} headers; syscalls newer than ${t.kernel} are unavailable at run time`}] : [];
+  }},
+  {needs: ["glibc"], check: (r, t) =>
+    r.glibc && r.glibc.requires && vcmp(r.glibc.requires, t.glibc) > 0
+      ? [{level: "NO", text: `needs GLIBC_${r.glibc.requires} symbols, target glibc is ${t.glibc} ("version not found")`}] : []},
+  {needs: ["interp"], check: (r, t) =>
+    r.hash_style === "gnu" && /uClibc/.test(t.interp)
+      ? [{level: "RISKY", text: "binaries only have DT_GNU_HASH; older uClibc loaders only read DT_HASH"}] : []},
 ];
 
 function matchRecord(r, t){
   const have = k => k === "provides" ? t.provides.size > 0 : !!t[k];
   const active = RULES.filter(rule => rule.needs.every(have));
   if (!active.length) return null;
-  const reasons = active.flatMap(rule => rule.check(r, t));
-  const verdict = reasons.some(x => x.level === "NO") ? "NO" : reasons.length ? "RISKY" : "OK";
+  const rank = {NO: 0, RISKY: 1, INFO: 2};
+  const reasons = active.flatMap(rule => rule.check(r, t)).sort((x, y) => rank[x.level] - rank[y.level]);
+  const verdict = reasons.some(x => x.level === "NO") ? "NO" : reasons.some(x => x.level === "RISKY") ? "RISKY" : "OK";
   return {verdict, reasons};
 }
 
@@ -195,7 +247,7 @@ function render(){
       b.textContent = res.verdict; vtd.appendChild(b);
       if (res.reasons.length){
         const ul = document.createElement("ul");
-        res.reasons.forEach(x => { const li = document.createElement("li"); li.className = x.level === "NO" ? "no" : "risk"; li.textContent = x.text; ul.appendChild(li); });
+        res.reasons.forEach(x => { const li = document.createElement("li"); li.className = ({NO: "no", RISKY: "risk", INFO: "info"})[x.level]; li.textContent = x.text; ul.appendChild(li); });
         wtd.appendChild(ul);
       }
     }
@@ -226,6 +278,16 @@ function parseRaw(){
   re = /(?:^|[\s/])((?:lib|ld)[A-Za-z0-9._+-]*\.so(?:\.[0-9]+)*)/g;
   while ((m = re.exec(txt))) prov.add(m[1]);
   $("t_provides").value = [...prov].sort().join(", ");
+  const set = (id, val, note) => { if (val){ $("t_" + id).value = val; notes.push(note + " " + val); } };
+  // uname -r / uname -a / /proc/version, or a line that is just a kernel version
+  const mk = txt.match(/Linux\s+(?:version\s+|\S+\s+)?(\d+\.\d+(?:\.\d+)?)/) || txt.match(/^\s*(\d+\.\d+\.\d+)\S*\s*$/m);
+  set("kernel", mk && mk[1], "kernel");
+  const me = txt.match(/Data:.*\b(big|little) endian/i);
+  set("endian", me && me[1].toLowerCase(), "endian");
+  const mm = txt.match(/^\s*Machine:\s*(.+?)\s*$/m);
+  set("machine", mm && mm[1], "machine");
+  const mg = txt.match(/\blibc-(\d+\.\d+)\.so\b/) || txt.match(/GNU C Library.*?(\d+\.\d+)/) || txt.match(/^ldd \(.*\)\s+(\d+\.\d+)/m);
+  set("glibc", mg && mg[1], "glibc");
   if (prov.size > before) notes.push((prov.size - before) + " soname(s)");
   $("parseout").textContent = notes.length ? "parsed: " + notes.join(", ") : "nothing recognized";
   doMatch();

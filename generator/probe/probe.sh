@@ -23,7 +23,7 @@ RE="${pfx}readelf"; [ -x "$RE" ] || RE="$(command -v readelf || true)"
 [ -n "$RE" ] || { echo "probe: no readelf" >&2; exit 2; }
 
 put(){ printf '%s\n' "$2" > "$OUT/$1"; }      # put <name> <value>
-cap(){ n="$1"; shift; "$@" > "$OUT/$n" 2>/dev/null; echo $? > "$OUT/$n.rc"; }  # cap <name> <cmd...>
+cap(){ local f="$1"; shift; "$@" > "$OUT/$f" 2>/dev/null; echo $? > "$OUT/$f.rc"; }  # cap <name> <cmd...>
 
 put tc_id "${TC_ID:-}"
 put cc "$CC"
@@ -50,6 +50,48 @@ if [ -n "$sysroot" ]; then
   put ldso_soname "$(first_soname "$sysroot"/lib/ld-*.so* "$sysroot"/lib/ld.so* "$sysroot"/lib/ld64.so* "$sysroot"/lib/*/ld-*.so*)"
   put libc_soname "$(first_soname "$sysroot"/lib/libc.so* "$sysroot"/lib/libuClibc*.so "$sysroot"/lib/*/libc.so*)"
 fi
+
+# --- time_t width -----------------------------------------------------------
+for n in 4 8; do
+  cap "time_t.$n" "$CC" -DTSZ=$n -c -o "$W/ts.o" "$here/corpus/timesize.c"
+done
+
+# --- probe corpus: real programs need more than hello ------------------------
+CXX="${pfx}g++"; [ -x "$CXX" ] || CXX=""
+put cxx "$CXX"
+for src in "$here"/corpus/*.c "$here"/corpus/*.cc; do
+  n="$(basename "${src%.*}")"; [ "$n" = timesize ] && continue
+  case "$src" in *.cc) c="$CXX"; [ -n "$c" ] || continue ;; *) c="$CC" ;; esac
+  libs="-lpthread -ldl -lm"; [ "$n" = cxx ] && libs=""
+  cap "corpus.$n.link" "$c" -o "$W/$n" "$src" $libs
+  if [ -f "$W/$n" ]; then
+    cap "corpus.$n.d" "$RE" -d "$W/$n"
+    cap "corpus.$n.V" "$RE" -V "$W/$n"
+    cap "corpus.$n.syms" "$RE" -W --dyn-syms "$W/$n"
+    cap "corpus.$n.n" "$RE" -n "$W/$n"
+  fi
+done
+
+# --- compiler defaults ----------------------------------------------------------
+cap gcc_target "$CC" -Q --help=target
+
+# --- sysroot: headers, libc config, shipped sonames -----------------------------
+if [ -n "$sysroot" ]; then
+  inc="$sysroot/usr/include"
+  cap linux_version_h cat "$inc/linux/version.h"
+  cap uclibc_config grep -hE '^#(define|undef) __(UCLIBC_|LDSO_)' "$inc/bits/uClibc_config.h"
+  cap features_h grep -hE '^#[[:space:]]*define[[:space:]]+__(GLIBC|GLIBC_MINOR|UCLIBC_MAJOR|UCLIBC_MINOR|UCLIBC_SUBLEVEL)__[[:space:]]' "$inc/features.h"
+  for f in "$sysroot"/lib/libc.so.6 "$sysroot"/lib/*/libc.so.6; do
+    [ -e "$f" ] && { cap libc_V "$RE" -V "$f"; break; }
+  done
+  : > "$OUT/sysroot_sonames"
+  for f in "$sysroot"/lib/*.so* "$sysroot"/usr/lib/*.so*; do
+    [ -f "$f" ] && soname "$f" >> "$OUT/sysroot_sonames"
+  done
+fi
+# Buildroot SDKs (Bootlin) list package versions; used where headers have none (musl)
+tcroot="$(cd "$(dirname "$CC")/.." && pwd)"
+[ -f "$tcroot/summary.csv" ] && cap summary grep -E '^"(musl|uclibc|glibc|linux-headers)",' "$tcroot/summary.csv"
 
 tar -C "$OUT" -cf - .
 rm -rf "$OUT" "$W"

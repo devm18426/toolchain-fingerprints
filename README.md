@@ -15,7 +15,9 @@ your target provides. See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
 | `schema/fingerprint.schema.json` | contract | the only thing the two components share |
 | `toolchains/<id>/Dockerfile` | generator | one fully pinned toolchain per directory |
 | `generator/probe/` | generator | `probe.sh` runs in the image; `normalize.py` turns its raw output into a record |
+| `generator/probe/corpus/` | generator | small C/C++ programs linked by the probe (pthreads, select/clock_gettime, dlopen, libm, 64-bit division, exceptions) |
 | `generator/gen.py` | generator | lint, build, probe, merge, validate (stdlib Python only) |
+| `generator/tests/` | generator | `python -m unittest discover -s generator/tests` (no Docker needed) |
 | `data/fingerprints.json` | output | the dataset, validated against the schema |
 | `web/index.html` | web page | reads only `fingerprints.json`; no build step |
 
@@ -54,9 +56,18 @@ Copy an existing Dockerfile and change the URL, checksum, `TC_ID` and `CC`.
 python -m http.server 8765
 ```
 
-then open <http://localhost:8765/web/>. Fill in your target's loader and
-`/lib` sonames (or paste `readelf`/`ls /lib` output) and each toolchain gets
-**OK / RISKY / NO** with the reasons. The page refuses a dataset whose schema
+then open <http://localhost:8765/web/>. Fill in what you know about the target
+(loader, `/lib` sonames, `uname -r`, endianness, machine, glibc version), or
+paste `readelf -h -l -d`, `ls /lib` and `uname -r` output, and each toolchain
+gets **OK / RISKY / NO** with the reasons. Rules only fire for facts you gave.
+
+What the matcher checks:
+
+| verdict | when |
+|---|---|
+| NO | wrong endianness or machine; different loader; a `hello` NEEDED lib missing; libc uses only `*_time64` syscalls and the kernel is older than 5.1; the kernel is below glibc's minimum; the program needs newer `GLIBC_` symbols than the target has |
+| RISKY | a library that real programs (pthreads, `select`, `dlopen`, libm) pull in is missing, e.g. `ld-uClibc.so.1`; only `DT_GNU_HASH` against a uClibc loader |
+| INFO | libc uses `*_time64` with fallback; kernel headers newer than the target kernel | The page refuses a dataset whose schema
 major version it does not know.
 
 `.github/workflows/pages.yml` publishes `web/index.html` next to
