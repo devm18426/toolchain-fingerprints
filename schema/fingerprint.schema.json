@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "fingerprint.schema.json",
   "title": "Cross-toolchain ABI fingerprints",
-  "x-version": "2.1",
+  "x-version": "2.2",
   "description": "The only contract between the generator and the web page. Versioning: adding an optional field is a minor bump; renaming, removing, or changing a field's type or enum is a major bump. The page refuses a major version it does not know.",
   "type": "object",
   "required": [
@@ -339,8 +339,8 @@
             },
             "image_digest": {
               "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$",
-              "description": "Local image ID the probe ran in. Informational: image builds are not bit-reproducible."
+              "pattern": "^([^\\s@]+@)?sha256:[0-9a-f]{64}$",
+              "description": "The image the probe ran in: a pullable registry reference (repo@sha256:...) when it came from a registry, else the local image ID."
             },
             "toolchain_sha256": {
               "$ref": "#/$defs/sha256"

@@ -6,8 +6,9 @@ Each step is its own command, so a failure points at one step:
     gen.py new      TC_ID URL     download a toolchain tarball, hash it, write toolchains/TC_ID/Dockerfile
     gen.py status                 what is up to date, stale, or invalid (read-only)
     gen.py lint     [TC_ID...]    check that every Dockerfile input is pinned
-    gen.py build    TC_ID         docker build toolchains/TC_ID (RUN steps have no network)
-    gen.py probe    TC_ID         run the probe in the built image -> .cache/records/TC_ID.json
+    gen.py build    TC_ID [--push] docker build toolchains/TC_ID (RUN steps have no network)
+    gen.py pull     TC_ID         fetch the image from the registry instead of building it
+    gen.py probe    TC_ID         run the probe in the image -> .cache/records/TC_ID.json
     gen.py merge                  merge current records into data/fingerprints.json
     gen.py validate [FILE...]     validate records or a data file against the schema
 
@@ -17,9 +18,14 @@ A record is computed once. It is current exactly as long as its provenance
 Only the Python standard library is used. The generator knows nothing about how
 the data is displayed or matched: its only output is data/fingerprints.json,
 which must validate against schema/fingerprint.schema.json.
+
+Images are content-addressed: the tag is the Dockerfile hash. With
+TCFP_REGISTRY set (e.g. ghcr.io/devm18426/toolchain-fingerprints) images are
+<registry>:<tc_id>-<hash12>; without it they stay local as tcfp/<tc_id>:<hash12>.
 """
 import argparse
 import datetime
+import os
 import hashlib
 import io
 import json
@@ -179,8 +185,13 @@ def toolchain_ids():
     return sorted(p.parent.name for p in TOOLCHAINS.glob("*/Dockerfile"))
 
 
+def registry():
+    return os.environ.get("TCFP_REGISTRY", "").rstrip("/")
+
+
 def image_tag(tc_id):
-    return f"tcfp/{tc_id}:{dockerfile_sha256(tc_id)[:12]}"
+    h = dockerfile_sha256(tc_id)[:12]
+    return f"{registry()}:{tc_id}-{h}" if registry() else f"tcfp/{tc_id}:{h}"
 
 
 # --------------------------------------------------------------------------
@@ -398,6 +409,31 @@ def image_id(tag):
     return p.stdout.strip() if p.returncode == 0 else None
 
 
+def image_ref(tag):
+    """Pullable registry digest (repo@sha256:...) if the image was pushed/pulled, else the local ID."""
+    p = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", tag],
+                       capture_output=True, text=True)
+    repo = tag.rsplit(":", 1)[0]
+    for d in (json.loads(p.stdout) if p.returncode == 0 else []) or []:
+        if d.startswith(repo + "@"):
+            return d
+    return image_id(tag)
+
+
+def try_pull(tag):
+    """Pull tag if the registry has it. True means it exists (and is now local)."""
+    p = subprocess.run(["docker", "pull", "-q", tag], capture_output=True, text=True)
+    return p.returncode == 0
+
+
+def docker(*args):
+    cmd = ["docker", *args]
+    print("+ " + " ".join(cmd), flush=True)
+    rc = subprocess.run(cmd).returncode
+    if rc != 0:
+        die(f"{' '.join(cmd[:2])} failed (exit {rc})")
+
+
 def probe_tar():
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as t:
@@ -488,21 +524,35 @@ def cmd_build(a):
     need_toolchain(a.tc_id)
     need_lint(a.tc_id)
     tag = image_tag(a.tc_id)
-    cmd = ["docker", "build", "--network=none", "-t", tag, str(TOOLCHAINS / a.tc_id)]
-    print("+ " + " ".join(cmd), flush=True)
-    rc = subprocess.run(cmd).returncode
-    if rc != 0:
-        die(f"docker build failed for {a.tc_id} (exit {rc})")
-    print(f"built {tag} = {image_id(tag)}")
+    if a.push and not registry():
+        die("--push needs TCFP_REGISTRY (e.g. ghcr.io/<owner>/toolchain-fingerprints)")
+    if a.push and try_pull(tag):
+        print(f"{tag} already in the registry (same Dockerfile hash); pulled it instead of building")
+    else:
+        labels = [f"--label={l}" for l in a.label] + [f"--label=io.tcfp.tc_id={a.tc_id}",
+                  f"--label=io.tcfp.dockerfile_sha256={dockerfile_sha256(a.tc_id)}"]
+        docker("build", "--network=none", *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
+        if a.push:
+            docker("push", tag)
+    print(f"image {tag} = {image_ref(tag)}")
+
+
+def cmd_pull(a):
+    need_toolchain(a.tc_id)
+    if not registry():
+        die("pull needs TCFP_REGISTRY (e.g. ghcr.io/<owner>/toolchain-fingerprints)")
+    tag = image_tag(a.tc_id)
+    docker("pull", tag)
+    print(f"image {tag} = {image_ref(tag)}")
 
 
 def cmd_probe(a):
     need_toolchain(a.tc_id)
     facts = need_lint(a.tc_id)
     tag = image_tag(a.tc_id)
-    iid = image_id(tag)
-    if not iid:
-        die(f"image {tag} not built; run: gen.py build {a.tc_id}")
+    if not image_id(tag):
+        die(f"image {tag} not present; run: gen.py build {a.tc_id} (or gen.py pull {a.tc_id})")
+    iid = image_ref(tag)
     raw = run_probe(tag)
     if raw.get("tc_id", "").strip() != a.tc_id:
         die(f"image reports TC_ID {raw.get('tc_id', '').strip()!r}, expected {a.tc_id!r}")
@@ -524,6 +574,18 @@ def cmd_probe(a):
 
 def cmd_status(a):
     pv, data, cache = probe_version(), load_data(), load_cache()
+    if a.json:
+        rows = []
+        for tc in toolchain_ids():
+            errs, _ = lint(tc)
+            state = ("refused" if errs else "current" if is_current(data.get(tc), tc, pv)
+                     else "probed" if is_current(cache.get(tc), tc, pv) else "stale")
+            rows.append({"tc_id": tc, "state": state, "image": image_tag(tc),
+                         "reason": stale_reason(data.get(tc), tc, pv) if state == "stale" else ""})
+        orphans = sorted(set(data) - set(toolchain_ids()))
+        print(json.dumps({"toolchains": rows, "orphans": orphans,
+                          "stale": [r["tc_id"] for r in rows if r["state"] == "stale"]}))
+        sys.exit(0)
     todo = 0
     for tc in toolchain_ids():
         errs, _ = lint(tc)
@@ -599,12 +661,19 @@ def main():
     p.add_argument("--cc", help="gcc name in the tarball's bin/ (default: the longest *-gcc)")
     p.add_argument("--comment", help="first line of the Dockerfile (default: tarball name)")
     p.set_defaults(fn=cmd_new)
-    sub.add_parser("status", help="show what is up to date").set_defaults(fn=cmd_status)
+    p = sub.add_parser("status", help="show what is up to date")
+    p.add_argument("--json", action="store_true", help="machine-readable, always exits 0")
+    p.set_defaults(fn=cmd_status)
     p = sub.add_parser("lint", help="check Dockerfiles are fully pinned")
     p.add_argument("tc_ids", nargs="*")
     p.set_defaults(fn=cmd_lint)
-    for name, fn, h in (("build", cmd_build, "build one toolchain image"),
-                        ("probe", cmd_probe, "probe one built toolchain image")):
+    p = sub.add_parser("build", help="build one toolchain image")
+    p.add_argument("tc_id")
+    p.add_argument("--push", action="store_true", help="push to TCFP_REGISTRY (skips the build if the tag exists)")
+    p.add_argument("--label", action="append", default=[], help="extra image label k=v (repeatable)")
+    p.set_defaults(fn=cmd_build)
+    for name, fn, h in (("pull", cmd_pull, "pull one toolchain image from TCFP_REGISTRY"),
+                        ("probe", cmd_probe, "probe one toolchain image")):
         p = sub.add_parser(name, help=h)
         p.add_argument("tc_id")
         p.set_defaults(fn=fn)
