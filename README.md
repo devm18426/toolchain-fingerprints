@@ -39,16 +39,40 @@ python generator/gen.py validate                  # check against the schema
 
 ### Adding a toolchain
 
-Create `toolchains/<id>/Dockerfile`. The generator refuses it (`gen.py lint`)
-unless every input is pinned:
+```sh
+python generator/gen.py new arm-uclibc-2026.08 https://toolchains.bootlin.com/.../armv7-eabihf--uclibc--stable-2026.08-1.tar.xz
+```
+
+`new` downloads the tarball (kept in `.cache/downloads`), records its sha256,
+picks the cross gcc from the tarball's `bin/` (the full-triple name; override
+with `--cc`), and writes `toolchains/<id>/Dockerfile`. Then run `build`,
+`probe` and `merge` as above and commit the Dockerfile with
+`data/fingerprints.json`.
+
+The generator refuses a hand-written Dockerfile (`gen.py lint`) unless every
+input is pinned:
 
 - every `FROM` is pinned by `@sha256:` digest;
-- the toolchain comes from exactly one `ADD --checksum=sha256:... <url>`;
+- the toolchain comes from exactly one `ADD --checksum=sha256:... <url> /tc.tar`;
+- any other download is also an `ADD --checksum`;
 - nothing is read from the build context, and `RUN` does no downloads
   (the build runs with `--network=none`, so it could not anyway);
 - `ENV TC_ID=<id>` (the directory name) and `ENV CC=<path to the cross gcc>`.
 
-Copy an existing Dockerfile and change the URL, checksum, `TC_ID` and `CC`.
+### Using the images to build software
+
+Each image (`tcfp/<id>:<hash>`) also has `make`, `patchelf`, `patch`, `xz`,
+`bzip2` and `pkg-config`, installed from `.deb` files pinned by sha256 on
+snapshot.debian.org. So the image you fingerprinted is the one you build with:
+
+```sh
+docker run --rm -v "$PWD:/work" tcfp/mips32-uclibc-2017.11:<hash> make
+```
+
+Bootlin toolchains put some host tools of their own in `/opt/tc/bin`, which is
+first on `PATH`; the 2017.11 one, for example, has an older `patchelf` 0.9.
+Autotools and a host gcc are not included; see `BUILD_TOOLS` in
+`generator/gen.py` to add more.
 
 ## Viewing
 

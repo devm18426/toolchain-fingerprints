@@ -3,6 +3,7 @@
 
 Each step is its own command, so a failure points at one step:
 
+    gen.py new      TC_ID URL     download a toolchain tarball, hash it, write toolchains/TC_ID/Dockerfile
     gen.py status                 what is up to date, stale, or invalid (read-only)
     gen.py lint     [TC_ID...]    check that every Dockerfile input is pinned
     gen.py build    TC_ID         docker build toolchains/TC_ID (RUN steps have no network)
@@ -24,9 +25,11 @@ import io
 import json
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,6 +38,27 @@ PROBE_DIR = ROOT / "generator" / "probe"
 TOOLCHAINS = ROOT / "toolchains"
 CACHE = ROOT / ".cache" / "records"
 DATA = ROOT / "data" / "fingerprints.json"
+DOWNLOADS = ROOT / ".cache" / "downloads"
+TOOLCHAIN_DEST = "/tc.tar"          # the ADD with this destination is the toolchain
+
+# Pinned inputs every toolchain Dockerfile gets (gen.py new writes them).
+ALPINE = "alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8"
+DEBIAN = "debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251"
+# Build tools for using the image to build software, as .debs from the same
+# snapshot.debian.org date the DEBIAN image was built from; hashes match apt's index.
+_SNAP = "https://snapshot.debian.org/archive/debian/20260918T000000Z/pool/main"
+_SNAP_SEC = "https://snapshot.debian.org/archive/debian-security/20260918T000000Z/pool/updates/main"
+BUILD_TOOLS = [
+    (f"{_SNAP}/m/make-dfsg/make_4.3-4.1_amd64.deb", "a1a83af8cbd854af887b72ad196b1f4af58387815e21ced1000253a116a46e2a"),
+    (f"{_SNAP}/p/patchelf/patchelf_0.14.3-1+b1_amd64.deb", "0364b90e81faabbb9569076063952c7bcbf07f83d954a2f2602a163d65be60e6"),
+    (f"{_SNAP}/p/patch/patch_2.7.6-7_amd64.deb", "8c6d49b771530dbe26d7bd060582dc7d2b4eeb603a20789debc1ef4bbbc4ef67"),
+    (f"{_SNAP_SEC}/x/xz-utils/xz-utils_5.4.1-1+deb12u2_amd64.deb", "f99fc3fe4b4e5baecf5fd8b53853a82e1e71cb5ec187b36b0ddcf227a8961c8f"),
+    (f"{_SNAP}/b/bzip2/bzip2_1.0.8-5+b1_amd64.deb", "438871b3f5c5c7a357a9840951dab9dab8db7eb1ff760a563226fafa111b99e5"),
+    (f"{_SNAP}/p/pkgconf/libpkgconf3_1.8.1-1_amd64.deb", "da01fb901123ae498c36387a32240e09e1f2866810146c5a574273f7eaf31093"),
+    (f"{_SNAP}/p/pkgconf/pkgconf-bin_1.8.1-1_amd64.deb", "8fb5a8f83e46ad04b4cf02651ceec56c0611a335cf0d30780d859a95d0400174"),
+    (f"{_SNAP}/p/pkgconf/pkgconf_1.8.1-1_amd64.deb", "4e3ce982b5fedc6c6119268435504a64f5ffcc6d93aaecaea902d816eba1215f"),
+    (f"{_SNAP}/p/pkgconf/pkg-config_1.8.1-1_amd64.deb", "312b2bdeff4671f8e0d589c124554890e944dd083061e9ad6f129bc76a970765"),
+]
 
 sys.path.insert(0, str(PROBE_DIR))
 from normalize import normalize  # noqa: E402
@@ -197,7 +221,7 @@ def _flags(args):
 def lint(tc_id):
     """Return (errors, facts). facts has toolchain_sha256, TC_ID, CC when found."""
     path = dockerfile(tc_id)
-    errs, facts, stages, url_sums, env = [], {}, set(), [], {}
+    errs, facts, stages, tc_sums, env = [], {}, set(), [], {}
     for n, kw, args in instructions(path.read_text()):
         where = f"{path.relative_to(ROOT).as_posix()}:{n}"
         flags, toks = _flags(args)
@@ -221,8 +245,8 @@ def lint(tc_id):
                     m = SHA.match(flags.get("checksum", ""))
                     if kw != "ADD" or not m or s.startswith(("git", "ssh")) or ".git" in s:
                         errs.append(f"{where}: {s} is downloaded without --checksum=sha256:...")
-                    else:
-                        url_sums.append(m.group(1))
+                    elif toks[-1] == TOOLCHAIN_DEST:
+                        tc_sums.append(m.group(1))
                 else:
                     errs.append(f"{where}: {kw} {s} reads the build context, which the Dockerfile hash "
                                 f"does not cover; download it with ADD --checksum instead")
@@ -241,17 +265,125 @@ def lint(tc_id):
                 k, eq, v = t.partition("=")
                 if eq:
                     env[k] = v
-    if len(url_sums) != 1:
+    if len(tc_sums) != 1:
         errs.append(f"{path.relative_to(ROOT).as_posix()}: expected exactly one checksummed toolchain "
-                    f"download (ADD --checksum=sha256:... URL), found {len(url_sums)}")
+                    f"download (ADD --checksum=sha256:... URL {TOOLCHAIN_DEST}), found {len(tc_sums)}")
     else:
-        facts["toolchain_sha256"] = url_sums[0]
+        facts["toolchain_sha256"] = tc_sums[0]
     if env.get("TC_ID") != tc_id:
         errs.append(f"{path.relative_to(ROOT).as_posix()}: ENV TC_ID must be '{tc_id}' (the directory name), "
                     f"found {env.get('TC_ID')!r}")
     if not env.get("CC"):
         errs.append(f"{path.relative_to(ROOT).as_posix()}: ENV CC must name the cross gcc")
     return errs, facts
+
+
+# --------------------------------------------------------------------------
+# Scaffolding a new toolchain
+# --------------------------------------------------------------------------
+def dockerfile_text(tc_id, comment, url, sha256, cc):
+    tools = "".join(f"ADD --checksum=sha256:{h} \\\n    {u} /debs/\n" for u, h in BUILD_TOOLS)
+    return f"""# {comment}
+# Every input is pinned: base images by digest, downloads by sha256.
+# RUN steps are built with --network=none, so nothing unpinned can be fetched.
+
+FROM {ALPINE} AS fetch
+ADD --checksum=sha256:{sha256} \\
+    {url} {TOOLCHAIN_DEST}
+RUN mkdir /tc && tar -xf {TOOLCHAIN_DEST} -C /tc --strip-components=1
+
+FROM {DEBIAN}
+# build tools (make, patchelf, patch, xz, bzip2, pkg-config), pinned .debs
+{tools}RUN dpkg -i /debs/*.deb && rm -rf /debs
+COPY --from=fetch /tc /opt/tc
+ENV TC_ID={tc_id} \\
+    CC=/opt/tc/bin/{cc} \\
+    PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WORKDIR /work
+"""
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def download(url):
+    """Download url into .cache/downloads (reused if present); return (path, sha256).
+
+    Uses curl when available (it verifies TLS with the OS certificate store,
+    which Python's bundled store can disagree with), else urllib.
+    """
+    DOWNLOADS.mkdir(parents=True, exist_ok=True)
+    dest = DOWNLOADS / url.rstrip("/").rsplit("/", 1)[-1]
+    if dest.exists():
+        print(f"using cached {dest.relative_to(ROOT).as_posix()}")
+        return dest, sha256_file(dest)
+    print(f"downloading {url}", flush=True)
+    tmp = dest.with_name(dest.name + ".part")
+    try:
+        if shutil.which("curl"):
+            rc = subprocess.run(["curl", "-fL", "--retry", "3", "-o", str(tmp), url]).returncode
+            if rc != 0:
+                die(f"download failed (curl exit {rc}): {url}")
+        else:
+            try:
+                with urllib.request.urlopen(url) as r, open(tmp, "wb") as f:
+                    shutil.copyfileobj(r, f, 1 << 20)
+            except OSError as e:
+                die(f"download failed: {url}: {e}")
+        tmp.replace(dest)
+    finally:
+        tmp.unlink(missing_ok=True)
+    return dest, sha256_file(dest)
+
+
+def find_gcc(tarball):
+    """Return (top_dir, [candidate gcc names]) from the tarball's <top>/bin/*-gcc entries."""
+    tops, gccs = set(), set()
+    with tarfile.open(tarball, "r:*") as t:
+        for m in t:
+            parts = m.name.lstrip("./").split("/")
+            if parts[0]:
+                tops.add(parts[0])
+            if len(parts) == 3 and parts[1] == "bin" and re.fullmatch(r"[\w.+-]+-gcc", parts[2]):
+                gccs.add(parts[2])
+    # prefer the full triple (most dashes), e.g. mips-buildroot-linux-uclibc-gcc over mips-linux-gcc
+    return tops, sorted(gccs, key=lambda g: (-g.count("-"), g))
+
+
+def cmd_new(a):
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", a.tc_id):
+        die(f"bad TC_ID {a.tc_id!r}: use letters, digits, '.', '_' and '-'")
+    if (TOOLCHAINS / a.tc_id).exists():
+        die(f"toolchains/{a.tc_id} already exists")
+    path, sha = download(a.url)
+    print(f"sha256 {sha}")
+    tops, gccs = find_gcc(path)
+    if len(tops) != 1:
+        die(f"expected one top-level directory in the tarball (it is extracted with --strip-components=1), "
+            f"found {sorted(tops)[:5]}")
+    cc = a.cc or (gccs[0] if gccs else None)
+    if not cc:
+        die("no <top>/bin/*-gcc in the tarball; pass --cc NAME")
+    if a.cc and a.cc not in gccs:
+        die(f"--cc {a.cc} is not in the tarball's bin/ (found: {', '.join(gccs) or 'none'})")
+    if len(gccs) > 1 and not a.cc:
+        print(f"using CC {cc} (others: {', '.join(g for g in gccs if g != cc)}; override with --cc)")
+    comment = a.comment or f"{a.url.rsplit('/', 1)[-1]}"
+    df = dockerfile(a.tc_id)
+    df.parent.mkdir(parents=True)
+    df.write_text(dockerfile_text(a.tc_id, comment, a.url, sha, cc), newline="\n")
+    errs, _ = lint(a.tc_id)
+    if errs:
+        die("generated Dockerfile does not lint (this is a bug):\n  " + "\n  ".join(errs))
+    print(f"wrote {df.relative_to(ROOT).as_posix()}\nnext, one at a time:\n"
+          f"  python generator/gen.py build {a.tc_id}\n"
+          f"  python generator/gen.py probe {a.tc_id}\n"
+          f"  python generator/gen.py merge")
 
 
 # --------------------------------------------------------------------------
@@ -461,6 +593,12 @@ def cmd_validate(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("new", help="scaffold toolchains/TC_ID/Dockerfile from a tarball URL")
+    p.add_argument("tc_id")
+    p.add_argument("url")
+    p.add_argument("--cc", help="gcc name in the tarball's bin/ (default: the longest *-gcc)")
+    p.add_argument("--comment", help="first line of the Dockerfile (default: tarball name)")
+    p.set_defaults(fn=cmd_new)
     sub.add_parser("status", help="show what is up to date").set_defaults(fn=cmd_status)
     p = sub.add_parser("lint", help="check Dockerfiles are fully pinned")
     p.add_argument("tc_ids", nargs="*")

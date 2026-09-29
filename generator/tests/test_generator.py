@@ -107,6 +107,16 @@ class Lint(unittest.TestCase):
         self.assertIn("apt-get", text)
         self.assertIn("build context", text)
 
+    def test_scaffold_template_lints_clean(self):
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")
+        self.assertEqual(self.lint_text(text), [])
+
+    def test_toolchain_is_the_tc_tar_download(self):
+        extra = "ADD --checksum=sha256:" + "e" * 64 + " https://x/make.deb /debs/\n"
+        self.assertEqual(self.lint_text(self.GOOD + extra), [])
+        errs = self.lint_text(self.GOOD.replace(" /tc.tar", " /other.tar"))
+        self.assertTrue(any("exactly one checksummed toolchain" in e for e in errs))
+
     def test_unchecksummed_download_refused(self):
         errs = self.lint_text(self.GOOD.replace("--checksum=sha256:" + "b" * 64 + " ", ""))
         self.assertTrue(any("without --checksum" in e for e in errs))
