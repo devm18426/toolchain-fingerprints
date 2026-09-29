@@ -80,6 +80,27 @@ class Normalize(unittest.TestCase):
         self.assertNotIn("glibc", r)
 
 
+class Registry(unittest.TestCase):
+    def test_record_needs_registry_image_when_registry_set(self):
+        import os
+        tc = gen.toolchain_ids()[0]
+        rec = {"provenance": {"dockerfile_sha256": gen.dockerfile_sha256(tc), "probe_version": "pv",
+                              "image_digest": "sha256:" + "0" * 64}}
+        old = os.environ.pop("TCFP_REGISTRY", None)
+        try:
+            self.assertTrue(gen.is_current(rec, tc, "pv"))
+            os.environ["TCFP_REGISTRY"] = "ghcr.io/o/r"
+            self.assertFalse(gen.is_current(rec, tc, "pv"))
+            self.assertEqual(gen.stale_reason(rec, tc, "pv"), "image not in ghcr.io/o/r")
+            rec["provenance"]["image_digest"] = "ghcr.io/o/r@sha256:" + "0" * 64
+            self.assertTrue(gen.is_current(rec, tc, "pv"))
+            self.assertEqual(gen.image_tag(tc), f"ghcr.io/o/r:{tc}-{gen.dockerfile_sha256(tc)[:12]}")
+        finally:
+            os.environ.pop("TCFP_REGISTRY", None)
+            if old is not None:
+                os.environ["TCFP_REGISTRY"] = old
+
+
 class Lint(unittest.TestCase):
     def lint_text(self, text):
         d = gen.TOOLCHAINS / "zz-lint-test"

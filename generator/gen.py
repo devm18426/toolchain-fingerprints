@@ -476,9 +476,15 @@ def load_cache():
     return out
 
 
+def in_registry(rec):
+    """With TCFP_REGISTRY set, a record only counts if its image came from that registry."""
+    return not registry() or (rec or {}).get("provenance", {}).get("image_digest", "").startswith(registry() + "@")
+
+
 def is_current(rec, tc_id, pv):
     p = (rec or {}).get("provenance", {})
-    return p.get("dockerfile_sha256") == dockerfile_sha256(tc_id) and p.get("probe_version") == pv
+    return (p.get("dockerfile_sha256") == dockerfile_sha256(tc_id) and p.get("probe_version") == pv
+            and in_registry(rec))
 
 
 def stale_reason(rec, tc_id, pv):
@@ -490,6 +496,8 @@ def stale_reason(rec, tc_id, pv):
         why.append("Dockerfile changed")
     if p.get("probe_version") != pv:
         why.append("probe changed")
+    if not in_registry(rec):
+        why.append(f"image not in {registry()}")
     return ", ".join(why)
 
 

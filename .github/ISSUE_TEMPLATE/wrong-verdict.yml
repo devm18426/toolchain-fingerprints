@@ -1,0 +1,42 @@
+name: Verdict was wrong on my device
+description: A toolchain was marked OK/RISKY/NO but a real binary behaved differently.
+title: "Wrong verdict: <toolchain> on <device>"
+labels: [wrong-verdict]
+body:
+  - type: input
+    id: tc_id
+    attributes:
+      label: Toolchain id
+    validations:
+      required: true
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Verdict the page gave
+      options: [OK, RISKY, NO]
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: Ran fine? Error message, exit code, strace excerpt?
+    validations:
+      required: true
+  - type: textarea
+    id: target
+    attributes:
+      label: Target facts
+      description: Output of these on the device (or from a binary that already runs there).
+      value: |
+        uname -r:
+        ls /lib:
+        readelf -h -l -d /bin/busybox:
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: binary
+    attributes:
+      label: What you built
+      description: Program, version, static or dynamic, configure/make flags.

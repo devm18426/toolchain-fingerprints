@@ -1,0 +1,97 @@
+name: release
+
+# When a merge changes the dataset: point each toolchain's moving tag at its
+# (already built, already probed) image, publish a data-<schema>.<n> release
+# with the JSON, the schema and checksums, and tell the web repo about it.
+# Nothing is rebuilt here.
+
+on:
+  push:
+    branches: [main]
+    paths: [data/fingerprints.json]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Every record is current (and its image is in GHCR)
+        run: |
+          export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
+          python3 generator/gen.py status && python3 generator/gen.py validate
+      - name: Next release tag
+        id: tag
+        run: |
+          ver=$(python3 -c 'import json; print(json.load(open("schema/fingerprint.schema.json"))["x-version"])')
+          last=$(git tag --list 'data-*' --sort=-creatordate | head -n 1)
+          if [ -n "$last" ] && git diff --quiet "$last" HEAD -- data/fingerprints.json; then
+            echo "data unchanged since $last; nothing to release"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          n=$(git tag --list "data-$ver.*" | sed "s/^data-$ver\.//" | sort -n | tail -n 1)
+          tag="data-$ver.$(( ${n:--1} + 1 ))"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"; echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "releasing $tag (previous: ${last:-none})"
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        if: steps.tag.outputs.skip == 'false'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Move each toolchain's :<id> tag to its current image
+        if: steps.tag.outputs.skip == 'false'
+        run: |
+          export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
+          python3 generator/gen.py status --json | python3 -c 'import json,sys
+          for r in json.load(sys.stdin)["toolchains"]: print(r["tc_id"], r["image"])' |
+          while read -r id image; do
+            docker buildx imagetools create --tag "$TCFP_REGISTRY:$id" "$image"
+          done
+      - name: Assets
+        if: steps.tag.outputs.skip == 'false'
+        run: |
+          mkdir -p dist
+          cp data/fingerprints.json schema/fingerprint.schema.json dist/
+          (cd dist && sha256sum fingerprints.json fingerprint.schema.json > SHA256SUMS)
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: steps.tag.outputs.skip == 'false'
+        with:
+          subject-path: dist/fingerprints.json
+      - name: Publish the release
+        if: steps.tag.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          gh release create "$TAG" dist/fingerprints.json dist/fingerprint.schema.json dist/SHA256SUMS \
+            --target "$GITHUB_SHA" --title "$TAG" --generate-notes --latest
+      - id: app
+        if: steps.tag.outputs.skip == 'false' && vars.WEB_REPO != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ vars.WEB_REPO }}
+      - name: Tell the web repo
+        if: steps.tag.outputs.skip == 'false' && vars.WEB_REPO != ''
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          WEB_REPO: ${{ vars.WEB_REPO }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY_OWNER/$WEB_REPO/dispatches" \
+            -f event_type=data-release -f "client_payload[tag]=$TAG"

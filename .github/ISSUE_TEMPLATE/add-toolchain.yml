@@ -1,0 +1,32 @@
+name: Add toolchain
+description: Fingerprint a new cross toolchain. A bot opens the PR; CI builds, probes and records it.
+title: "Add toolchain: "
+labels: [add-toolchain]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The tarball must contain one top-level directory with `bin/<triple>-gcc` inside
+        (Bootlin toolchains do). Only issues from the repo owner or collaborators are processed.
+  - type: input
+    id: tc_id
+    attributes:
+      label: Toolchain id
+      description: "Directory name under toolchains/: letters, digits, '.', '_' and '-'. Convention: <arch>-<libc>-<version>."
+      placeholder: armv7-eabihf-uclibc-2026.08
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Tarball URL
+      description: https URL of the toolchain tarball (.tar.xz, .tar.bz2 or .tar.gz). Its sha256 is pinned in the Dockerfile.
+      placeholder: https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--uclibc--stable-2026.08-1.tar.xz
+    validations:
+      required: true
+  - type: input
+    id: cc
+    attributes:
+      label: gcc name
+      description: Optional. Name of the cross gcc in the tarball's bin/. Default is the full-triple one.
+      placeholder: arm-buildroot-linux-uclibcgnueabihf-gcc

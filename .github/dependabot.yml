@@ -1,0 +1,10 @@
+# Actions only. Base images and toolchain tarballs are pinned on purpose:
+# bumping one changes a Dockerfile hash and re-probes that toolchain, so it
+# should be a deliberate PR, not an automated one.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      actions: { patterns: ["*"] }

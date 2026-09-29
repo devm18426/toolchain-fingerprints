@@ -5,8 +5,26 @@ toolchain X run on target Y?*
 
 A cross toolchain's binaries carry a fixed set of runtime requirements: a
 loader path, libc sonames, an ISA, endianness, a float ABI. This project
-records those facts per toolchain and a static page compares them against what
-your target provides. See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
+records those facts per toolchain. The page that compares them against a
+target lives in [toolchain-fingerprints-web](https://github.com/devm18426/toolchain-fingerprints-web)
+and consumes this repo's releases. See [docs/DESIGN.md](docs/DESIGN.md) for the
+reasoning and [docs/SETUP.md](docs/SETUP.md) for the one-time GitHub setup.
+
+## What this repo publishes
+
+| what | where |
+|---|---|
+| the dataset | a GitHub Release per change, `data-<schema>.<n>`, with `fingerprints.json`, the schema and `SHA256SUMS`; latest at `releases/latest/download/fingerprints.json` |
+| toolchain images | `ghcr.io/devm18426/toolchain-fingerprints:<tc_id>` (current) and `:<tc_id>-<dockerfile hash>` (pinned), with build provenance attestations |
+
+## How a toolchain gets in
+
+1. Open an **Add toolchain** issue with an id and a tarball URL (or run `gen.py new` locally and push a branch).
+2. The bot runs `gen.py new` and opens a PR with the Dockerfile.
+3. CI lints and tests, builds only the new image, pushes it to GHCR, probes it, and commits the record to the PR.
+4. You merge once `ready` is green. A release is cut and the web repo picks it up.
+
+Nothing runs on a schedule: a record is redone only when its Dockerfile or the probe changes.
 
 ## Layout
 
@@ -19,7 +37,7 @@ your target provides. See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
 | `generator/gen.py` | generator | lint, build, probe, merge, validate (stdlib Python only) |
 | `generator/tests/` | generator | `python -m unittest discover -s generator/tests` (no Docker needed) |
 | `data/fingerprints.json` | output | the dataset, validated against the schema |
-| `web/index.html` | web page | reads only `fingerprints.json`; no build step |
+| `.github/workflows/` | CI | `ci.yml` (PR build/probe/record), `add-toolchain.yml` (issue bot), `release.yml` |
 
 ## Generating records
 
@@ -61,12 +79,12 @@ input is pinned:
 
 ### Using the images to build software
 
-Each image (`tcfp/<id>:<hash>`) also has `make`, `patchelf`, `patch`, `xz`,
+Each image also has `make`, `patchelf`, `patch`, `xz`,
 `bzip2` and `pkg-config`, installed from `.deb` files pinned by sha256 on
 snapshot.debian.org. So the image you fingerprinted is the one you build with:
 
 ```sh
-docker run --rm -v "$PWD:/work" tcfp/mips32-uclibc-2017.11:<hash> make
+docker run --rm -v "$PWD:/work" ghcr.io/devm18426/toolchain-fingerprints:mips32-uclibc-2017.11 make
 ```
 
 Bootlin toolchains put some host tools of their own in `/opt/tc/bin`, which is
@@ -74,27 +92,15 @@ first on `PATH`; the 2017.11 one, for example, has an older `patchelf` 0.9.
 Autotools and a host gcc are not included; see `BUILD_TOOLS` in
 `generator/gen.py` to add more.
 
-## Viewing
+## Images locally
+
+Without `TCFP_REGISTRY`, `gen.py build` tags images `tcfp/<id>:<hash>` on this
+machine. With it set, `build --push` publishes to that registry (pulling instead
+if the hash already exists) and `pull` fetches an image instead of building:
 
 ```sh
-python -m http.server 8765
+TCFP_REGISTRY=ghcr.io/devm18426/toolchain-fingerprints python generator/gen.py pull mips32-uclibc-2017.11
 ```
 
-then open <http://localhost:8765/web/>. Fill in what you know about the target
-(loader, `/lib` sonames, `uname -r`, endianness, machine, glibc version), or
-paste `readelf -h -l -d`, `ls /lib` and `uname -r` output, and each toolchain
-gets **OK / RISKY / NO** with the reasons. Rules only fire for facts you gave.
-
-What the matcher checks:
-
-| verdict | when |
-|---|---|
-| NO | wrong endianness or machine; different loader; a `hello` NEEDED lib missing; libc uses only `*_time64` syscalls and the kernel is older than 5.1; the kernel is below glibc's minimum; the program needs newer `GLIBC_` symbols than the target has |
-| RISKY | a library that real programs (pthreads, `select`, `dlopen`, libm) pull in is missing, e.g. `ld-uClibc.so.1`; only `DT_GNU_HASH` against a uClibc loader |
-| INFO | libc uses `*_time64` with fallback; kernel headers newer than the target kernel |
-
-The page refuses a dataset whose schema major version it does not know.
-
-`.github/workflows/pages.yml` publishes `web/index.html` next to
-`data/fingerprints.json` on push. It lints, validates and checks that every
-record is current, but never fingerprints anything itself.
+With a registry set, `status` also counts a record as stale until its image is
+in that registry.
