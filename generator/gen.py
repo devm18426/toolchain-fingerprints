@@ -411,6 +411,8 @@ def image_id(tag):
 
 def image_ref(tag):
     """Pullable registry digest (repo@sha256:...) if the image was pushed/pulled, else the local ID."""
+    if not registry():
+        return image_id(tag)
     p = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", tag],
                        capture_output=True, text=True)
     repo = tag.rsplit(":", 1)[0]
