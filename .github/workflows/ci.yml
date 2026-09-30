@@ -6,6 +6,10 @@ name: ci
 # needs no Docker at all: the record job re-derives records from data/raw/. The PR you merge therefore always
 # carries data/fingerprints.json that matches its Dockerfiles.
 #
+# Run it by hand (Actions > ci > Run workflow) on main to build and probe
+# whatever is stale there and get the records as a PR: that is how records
+# probed elsewhere, or a first push, get their images into GHCR.
+#
 # Images are content-addressed (tag = Dockerfile hash): a tag that already
 # exists in GHCR is pulled, never rebuilt, so one hash maps to one digest.
 
@@ -67,11 +71,12 @@ jobs:
           PY
 
   build:
-    # Only PRs from branches of this repo (the add-toolchain bot or you) may push images.
+    # Only PRs from branches of this repo (the add-toolchain bot or you), or a
+    # manual run, may push images.
     needs: [checks, plan]
     if: >-
-      needs.plan.outputs.probe == 'true' && github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      needs.plan.outputs.probe == 'true' && (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -120,14 +125,16 @@ jobs:
           if-no-files-found: error
 
   record:
-    # Commit the new records to the PR branch. Uses the GitHub App token so the
-    # push triggers CI again (a GITHUB_TOKEN push would not).
+    # Commit the new records to the PR branch, or on a manual run to a new branch
+    # with a PR. Uses the GitHub App token so the push triggers CI again (a
+    # GITHUB_TOKEN push would not).
     needs: [plan, build]
     # Runs after the builds, or alone when only normalize.py changed (build skipped).
     if: >-
-      always() && needs.plan.outputs.any == 'true' && github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      (needs.build.result == 'success' || needs.build.result == 'skipped')
+      always() && needs.plan.outputs.any == 'true' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     steps:
       - id: app
@@ -137,7 +144,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref || github.ref_name }}
           token: ${{ steps.app.outputs.token }}
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -159,8 +166,17 @@ jobs:
           git config user.email "${uid}+${SLUG}[bot]@users.noreply.github.com"
           git add data
           msg=$(python3 -c 'import json, os; s = json.loads(os.environ["STALE"]); print("Record fingerprints: " + ", ".join(s) if s else "Re-derive records for the normalizer change")')
-          git commit -m "$msg"
-          git push
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            branch="refresh-records-$GITHUB_RUN_ID"
+            git switch -c "$branch"
+            git commit -m "$msg"
+            git push -u origin "$branch"
+            gh pr create --head "$branch" --title "$msg" \
+              --body "Built, pushed and probed by a manual CI run. Merge when \`ready\` is green."
+          else
+            git commit -m "$msg"
+            git push
+          fi
 
   ready:
     # The one required check: passes only when every record matches its Dockerfile.
@@ -179,5 +195,5 @@ jobs:
         run: |
           export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
           python3 generator/gen.py status || {
-            echo "::error::Records are stale. On a PR from this repo, CI commits them; from a fork, run gen.py build/probe/merge locally."
+            echo "::error::Records are stale or their images are not in GHCR yet. On a PR from this repo CI commits them. On main, run this workflow by hand (Actions > ci > Run workflow) to get them as a PR. From a fork, run gen.py build/probe/merge locally."
             exit 1; }

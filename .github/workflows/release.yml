@@ -30,12 +30,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Every record is current (and its image is in GHCR)
+        id: current
         run: |
           export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
-          python3 generator/gen.py status && python3 generator/gen.py validate
+          python3 generator/gen.py validate
+          if python3 generator/gen.py status; then echo "ok=true" >> "$GITHUB_OUTPUT"; else
+            echo "::notice::Not releasing: some records are stale or their images are not in GHCR yet. The ci workflow's 'ready' check says what to do."
+            echo "ok=false" >> "$GITHUB_OUTPUT"; fi
       - name: Next release tag
         id: tag
         run: |
+          if [ "${{ steps.current.outputs.ok }}" != true ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           ver=$(python3 -c 'import json; print(json.load(open("schema/fingerprint.schema.json"))["x-version"])')
           last=$(git tag --list 'data-*' --sort=-creatordate | head -n 1)
           if [ -n "$last" ] && git diff --quiet "$last" HEAD -- data/fingerprints.json; then
