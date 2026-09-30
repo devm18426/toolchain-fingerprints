@@ -39,6 +39,18 @@ class Flags(unittest.TestCase):
         self.assertEqual(_decode_arch("PowerPC64", 0x2, "Tag_GNU_Power_ABI_FP: Hard float")[1]["elf_abi"], "v2")
         # a machine nobody has written a decoder for still yields a usable record
         self.assertEqual(_decode_arch("LoongArch", 0x43, ""), ("loongarch", {}, "unknown"))
+        self.assertEqual(_decode_arch("Renesas / SuperH SH", 0, "")[0], "sh")
+        self.assertEqual(_decode_arch("Some Future CPU", 0, "")[0], "some")
+
+    def test_families_cover_bootlin_and_uname_names(self):
+        from normalize import machine_family
+        for name, fam in [("MC68000", "m68k"), ("Xilinx MicroBlaze", "microblaze"), ("microblazeel", "microblaze"),
+                          ("Altera Nios II", "nios2"), ("OpenRISC 1000", "openrisc"), ("IBM S/390", "s390"),
+                          ("s390x", "s390"), ("sh4", "sh"), ("Sparc v9", "sparc"), ("sparc64", "sparc"),
+                          ("Tensilica Xtensa Processor", "xtensa"), ("ARCv2", "arc"), ("aarch64", "aarch64"),
+                          ("armv7l", "arm"), ("i686", "x86"), ("x86_64", "x86_64"), ("ppc64le", "power"),
+                          ("Analog Devices Blackfin", "blackfin"), ("C-SKY", "csky")]:
+            self.assertEqual(machine_family(name), fam, name)
 
 
 class Time64(unittest.TestCase):

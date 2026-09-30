@@ -4,6 +4,7 @@
 Each step is its own command, so a failure points at one step:
 
     gen.py new      TC_ID URL     download a toolchain tarball, hash it, write toolchains/TC_ID/Dockerfile
+    gen.py import-bootlin RELEASE  do that for every Bootlin toolchain of a release (filters available)
     gen.py status                 what is up to date, stale, or invalid (read-only)
     gen.py lint     [TC_ID...]    check that every Dockerfile input is pinned
     gen.py build    TC_ID [--push] docker build toolchains/TC_ID (RUN steps have no network)
@@ -35,6 +36,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import concurrent.futures
 import urllib.request
 from pathlib import Path
 
@@ -50,7 +52,6 @@ RAW_DATA = ROOT / "data" / "raw"            # probe output per toolchain: record
 # Toolchain tarballs contain x86-64 host binaries; the base images are multi-arch
 # indexes, so pin the platform or an arm64 host would pull the wrong base.
 PLATFORM = "linux/amd64"
-DOWNLOADS = ROOT / ".cache" / "downloads"
 TOOLCHAIN_DEST = "/tc.tar"          # the ADD with this destination is the toolchain
 
 # Pinned inputs every toolchain Dockerfile gets (gen.py new writes them).
@@ -279,6 +280,7 @@ def lint(tc_id):
                         errs.append(f"{where}: {s} is downloaded without --checksum=sha256:...")
                     elif toks[-1] == TOOLCHAIN_DEST:
                         tc_sums.append(m.group(1))
+                        facts["toolchain_url"] = s
                 else:
                     errs.append(f"{where}: {kw} {s} reads the build context, which the Dockerfile hash "
                                 f"does not cover; download it with ADD --checksum instead")
@@ -335,87 +337,181 @@ WORKDIR /work
 """
 
 
-def sha256_file(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+class _Hashing(io.RawIOBase):
+    """Wraps a byte stream and hashes everything read through it."""
+
+    def __init__(self, f):
+        self.f, self.h = f, hashlib.sha256()
+
+    def readable(self):
+        return True
+
+    def readinto(self, b):
+        n = self.f.readinto(b)
+        if n:
+            self.h.update(memoryview(b)[:n])
+        return n
 
 
-def download(url):
-    """Download url into .cache/downloads (reused if present); return (path, sha256).
+def inspect_tarball(url):
+    """Stream url once: return (sha256, top-level dirs, gcc names in <top>/bin/).
 
-    Uses curl when available (it verifies TLS with the OS certificate store,
-    which Python's bundled store can disagree with), else urllib.
+    Nothing is written to disk, so importing hundreds of toolchains needs no
+    space. curl is preferred: it verifies TLS with the OS certificate store,
+    which Python's bundled store can disagree with.
     """
-    DOWNLOADS.mkdir(parents=True, exist_ok=True)
-    dest = DOWNLOADS / url.rstrip("/").rsplit("/", 1)[-1]
-    if dest.exists():
-        print(f"using cached {dest.relative_to(ROOT).as_posix()}")
-        return dest, sha256_file(dest)
-    print(f"downloading {url}", flush=True)
-    tmp = dest.with_name(dest.name + ".part")
-    try:
-        if shutil.which("curl"):
-            rc = subprocess.run(["curl", "-fL", "--retry", "3", "-o", str(tmp), url]).returncode
-            if rc != 0:
-                die(f"download failed (curl exit {rc}): {url}")
-        else:
-            try:
-                with urllib.request.urlopen(url) as r, open(tmp, "wb") as f:
-                    shutil.copyfileobj(r, f, 1 << 20)
-            except OSError as e:
-                die(f"download failed: {url}: {e}")
-        tmp.replace(dest)
-    finally:
-        tmp.unlink(missing_ok=True)
-    return dest, sha256_file(dest)
-
-
-def find_gcc(tarball):
-    """Return (top_dir, [candidate gcc names]) from the tarball's <top>/bin/*-gcc entries."""
+    proc = None
+    if shutil.which("curl"):
+        proc = subprocess.Popen(["curl", "-fsSL", "--retry", "3", url], stdout=subprocess.PIPE)
+        raw = proc.stdout
+    else:
+        raw = urllib.request.urlopen(url)
+    src = _Hashing(raw)
+    buf = io.BufferedReader(src, 1 << 20)
     tops, gccs = set(), set()
-    with tarfile.open(tarball, "r:*") as t:
-        for m in t:
-            parts = m.name.lstrip("./").split("/")
-            if parts[0]:
-                tops.add(parts[0])
-            if len(parts) == 3 and parts[1] == "bin" and re.fullmatch(r"[\w.+-]+-gcc", parts[2]):
-                gccs.add(parts[2])
+    try:
+        with tarfile.open(fileobj=buf, mode="r|*") as t:
+            for m in t:
+                parts = m.name.lstrip("./").split("/")
+                if parts[0]:
+                    tops.add(parts[0])
+                if len(parts) == 3 and parts[1] == "bin" and re.fullmatch(r"[\w.+-]+-gcc", parts[2]):
+                    gccs.add(parts[2])
+        while buf.read(1 << 20):                      # trailing padding: hash the whole file
+            pass
+    except tarfile.TarError as e:
+        raise ValueError(f"not a readable tarball: {e}")
+    finally:
+        if proc:
+            proc.stdout.close()
+            rc = proc.wait()
+            if rc:
+                raise ValueError(f"download failed (curl exit {rc})")
     # prefer the full triple (most dashes), e.g. mips-buildroot-linux-uclibc-gcc over mips-linux-gcc
-    return tops, sorted(gccs, key=lambda g: (-g.count("-"), g))
+    return src.h.hexdigest(), tops, sorted(gccs, key=lambda g: (-g.count("-"), g))
+
+
+def scaffold(tc_id, url, cc=None, comment=None):
+    """Write toolchains/TC_ID/Dockerfile for a tarball. Returns (cc, sha256); raises ValueError."""
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", tc_id):
+        raise ValueError(f"bad TC_ID {tc_id!r}: use letters, digits, '.', '_' and '-'")
+    if (TOOLCHAINS / tc_id).exists():
+        raise ValueError(f"toolchains/{tc_id} already exists")
+    sha, tops, gccs = inspect_tarball(url)
+    if len(tops) != 1:
+        raise ValueError(f"expected one top-level directory in the tarball (it is extracted with "
+                         f"--strip-components=1), found {sorted(tops)[:5]}")
+    if cc and cc not in gccs:
+        raise ValueError(f"--cc {cc} is not in the tarball's bin/ (found: {', '.join(gccs) or 'none'})")
+    cc = cc or (gccs[0] if gccs else None)
+    if not cc:
+        raise ValueError("no <top>/bin/*-gcc in the tarball; pass --cc NAME")
+    df = dockerfile(tc_id)
+    df.parent.mkdir(parents=True)
+    df.write_text(dockerfile_text(tc_id, comment or url.rsplit("/", 1)[-1], url, sha, cc), newline="\n")
+    errs, _ = lint(tc_id)
+    if errs:
+        shutil.rmtree(df.parent)
+        raise ValueError("generated Dockerfile does not lint (this is a bug):\n  " + "\n  ".join(errs))
+    return cc, sha
 
 
 def cmd_new(a):
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", a.tc_id):
-        die(f"bad TC_ID {a.tc_id!r}: use letters, digits, '.', '_' and '-'")
-    if (TOOLCHAINS / a.tc_id).exists():
-        die(f"toolchains/{a.tc_id} already exists")
-    path, sha = download(a.url)
-    print(f"sha256 {sha}")
-    tops, gccs = find_gcc(path)
-    if len(tops) != 1:
-        die(f"expected one top-level directory in the tarball (it is extracted with --strip-components=1), "
-            f"found {sorted(tops)[:5]}")
-    cc = a.cc or (gccs[0] if gccs else None)
-    if not cc:
-        die("no <top>/bin/*-gcc in the tarball; pass --cc NAME")
-    if a.cc and a.cc not in gccs:
-        die(f"--cc {a.cc} is not in the tarball's bin/ (found: {', '.join(gccs) or 'none'})")
-    if len(gccs) > 1 and not a.cc:
-        print(f"using CC {cc} (others: {', '.join(g for g in gccs if g != cc)}; override with --cc)")
-    comment = a.comment or f"{a.url.rsplit('/', 1)[-1]}"
-    df = dockerfile(a.tc_id)
-    df.parent.mkdir(parents=True)
-    df.write_text(dockerfile_text(a.tc_id, comment, a.url, sha, cc), newline="\n")
-    errs, _ = lint(a.tc_id)
-    if errs:
-        die("generated Dockerfile does not lint (this is a bug):\n  " + "\n  ".join(errs))
-    print(f"wrote {df.relative_to(ROOT).as_posix()}\nnext, one at a time:\n"
+    print(f"downloading {a.url}", flush=True)
+    try:
+        cc, sha = scaffold(a.tc_id, a.url, a.cc, a.comment)
+    except ValueError as e:
+        die(str(e))
+    print(f"sha256 {sha}\nCC {cc}\nwrote toolchains/{a.tc_id}/Dockerfile\nnext, one at a time:\n"
           f"  python generator/gen.py build {a.tc_id}\n"
           f"  python generator/gen.py probe {a.tc_id}\n"
           f"  python generator/gen.py merge")
+
+
+# --------------------------------------------------------------------------
+# Bulk import from Bootlin
+# --------------------------------------------------------------------------
+BOOTLIN = "https://toolchains.bootlin.com/downloads/releases/toolchains"
+
+
+def fetch_text(url):
+    if shutil.which("curl"):
+        p = subprocess.run(["curl", "-fsSL", "--retry", "3", url], capture_output=True)
+        if p.returncode:
+            raise ValueError(f"{url}: curl exit {p.returncode}")
+        return p.stdout.decode("utf-8", "replace")
+    with urllib.request.urlopen(url) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def bootlin_tarballs(release, archs=(), libcs=(), channels=()):
+    """Yield (tc_id, url) for every Bootlin tarball of RELEASE matching the filters.
+
+    Bootlin names tarballs <arch>--<libc>--<stable|bleeding-edge>-<release>.tar.*;
+    the id is <arch>-<libc>-<channel>-<release>.
+    """
+    index = fetch_text(BOOTLIN + "/")
+    arch_dirs = sorted(set(re.findall(r'href="([A-Za-z0-9._+-]+)/"', index)))
+    if archs:
+        arch_dirs = [d for d in arch_dirs if d in archs]
+    pat = re.compile(r"(?P<arch>[A-Za-z0-9._+-]+?)--(?P<libc>[a-z]+)--(?P<ch>stable|bleeding-edge)-"
+                     + re.escape(release) + r"\.tar\.(xz|bz2|gz)")
+
+    def listing(arch):
+        return arch, fetch_text(f"{BOOTLIN}/{arch}/tarballs/")
+
+    with concurrent.futures.ThreadPoolExecutor(8) as pool:
+        pages = list(pool.map(listing, arch_dirs))
+    for arch, page in pages:
+        for name in sorted(set(re.findall(r'href="([^"/?]+\.tar\.(?:xz|bz2|gz))"', page))):
+            m = pat.fullmatch(name)
+            if not m or m["arch"] != arch:
+                continue
+            if (libcs and m["libc"] not in libcs) or (channels and m["ch"] not in channels):
+                continue
+            yield f"{arch}-{m['libc']}-{m['ch']}-{release}", f"{BOOTLIN}/{arch}/tarballs/{name}"
+
+
+def cmd_import_bootlin(a):
+    have_urls = {lint(tc)[1].get("toolchain_url") for tc in toolchain_ids()}
+    todo, skipped = [], []
+    for tc_id, url in bootlin_tarballs(a.release, set(a.arch), set(a.libc), set(a.channel)):
+        if url in have_urls or (TOOLCHAINS / tc_id).exists():
+            skipped.append(tc_id)
+        else:
+            todo.append((tc_id, url))
+    if a.limit:
+        todo = todo[:a.limit]
+    print(f"Bootlin {a.release}: {len(todo)} to import, {len(skipped)} already present", flush=True)
+    if a.dry_run:
+        for tc_id, url in todo:
+            print(f"  {tc_id}  {url}")
+        return
+    done, failed = [], []
+
+    def one(item):
+        tc_id, url = item
+        try:
+            cc, _ = scaffold(tc_id, url, comment=f"Bootlin {url.rsplit('/', 1)[-1]}")
+            return tc_id, cc, None
+        except (ValueError, OSError) as e:
+            return tc_id, None, str(e).splitlines()[0]
+
+    with concurrent.futures.ThreadPoolExecutor(a.jobs) as pool:
+        for tc_id, cc, err in pool.map(one, todo):
+            (failed if err else done).append((tc_id, err or cc))
+            print(f"  {'FAILED' if err else 'ok    '} {tc_id}  {err or cc}", flush=True)
+    print(f"imported {len(done)}, failed {len(failed)}, skipped {len(skipped)}")
+    if a.summary:
+        lines = [f"Imports {len(done)} Bootlin `{a.release}` toolchains with `gen.py import-bootlin`.", ""]
+        if failed:
+            lines += [f"{len(failed)} tarballs could not be imported:", ""]
+            lines += [f"- `{t}`: {e}" for t, e in failed] + [""]
+        if skipped:
+            lines += [f"{len(skipped)} were already present and skipped.", ""]
+        Path(a.summary).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if todo and not done:
+        sys.exit(2)
 
 
 # --------------------------------------------------------------------------
@@ -741,6 +837,16 @@ def main():
     p.add_argument("--cc", help="gcc name in the tarball's bin/ (default: the longest *-gcc)")
     p.add_argument("--comment", help="first line of the Dockerfile (default: tarball name)")
     p.set_defaults(fn=cmd_new)
+    p = sub.add_parser("import-bootlin", help="scaffold every Bootlin toolchain of a release")
+    p.add_argument("release", help="Bootlin release, e.g. 2026.08-1")
+    p.add_argument("--arch", nargs="*", default=[], help="only these arch directories, e.g. aarch64 mips32")
+    p.add_argument("--libc", nargs="*", default=[], help="only these: glibc musl uclibc")
+    p.add_argument("--channel", nargs="*", default=[], help="only these: stable bleeding-edge")
+    p.add_argument("--limit", type=int, default=0, help="import at most N")
+    p.add_argument("--jobs", type=int, default=4, help="parallel downloads")
+    p.add_argument("--dry-run", action="store_true", help="list what would be imported")
+    p.add_argument("--summary", help="write a markdown summary here (used as the PR body)")
+    p.set_defaults(fn=cmd_import_bootlin)
     p = sub.add_parser("status", help="show what is up to date")
     p.add_argument("--json", action="store_true", help="machine-readable, always exits 0")
     p.set_defaults(fn=cmd_status)

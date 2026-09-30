@@ -4,8 +4,8 @@ Records are re-derived from the stored raw output (data/raw/) whenever this
 file changes (provenance.normalize_version), so improving extraction or adding
 an architecture never needs a Docker build or a new probe run.
 
-Adding an architecture: write one decoder below and register it in ARCH. It
-returns (family, abi, float_abi); abi is a flat dict of scalars that lands in
+Adding an architecture: write one decoder below and register it in DECODERS
+(and FAMILIES, if its name is new). It returns (family, abi, float_abi); abi is a flat dict of scalars that lands in
 the record's open-ended `arch.abi` object, so no schema or page change is needed.
 """
 import re
@@ -92,24 +92,58 @@ def _fixed_hard(family):
     return lambda flags, attrs: (family, {}, "hard")
 
 
-# readelf "Machine:" prefix -> decoder. Unknown machines still get a full record,
-# only float_abi is "unknown" and arch.abi is empty.
-ARCH = [
-    ("MIPS", _mips),
-    ("ARM", _arm),                                    # exact match below, "AArch64" is separate
-    ("AArch64", _fixed_hard("aarch64")),
-    ("RISC-V", _riscv),
-    ("PowerPC", _power),
-    ("Advanced Micro Devices X86-64", _fixed_hard("x86_64")),
-    ("Intel 80386", _fixed_hard("x86")),
+# Machine name (readelf's Machine text or uname -m) -> family. The web page has
+# the same table (site/matcher.js); keep them in sync. Names not listed become
+# their first word, lowercased, on both sides.
+FAMILIES = [
+    (r"^(x86[-_]64|amd64|advanced micro devices x86-64)", "x86_64"),
+    (r"^(i[3-6]86|x86$|intel 80386)", "x86"),
+    (r"^(aarch64|arm64)", "aarch64"),
+    (r"^arm", "arm"),
+    (r"^mips", "mips"),
+    (r"^risc-?v", "riscv"),
+    (r"^(ppc|powerpc|power)", "power"),
+    (r"^loongarch", "loongarch"),
+    (r"^(mc68|m68k|coldfire)", "m68k"),
+    (r"^(xilinx microblaze|microblaze)", "microblaze"),
+    (r"^(altera nios|nios2)", "nios2"),
+    (r"^(openrisc|or1k)", "openrisc"),
+    (r"^(ibm s/390|s390)", "s390"),
+    (r"^(renesas / superh|superh|sh\d|sh$)", "sh"),
+    (r"^sparc", "sparc"),
+    (r"^(tensilica xtensa|xtensa)", "xtensa"),
+    (r"^(arcv2|arcompact|arc)", "arc"),
+    (r"^(analog devices blackfin|blackfin|bfin)", "blackfin"),
+    (r"^(c-sky|csky)", "csky"),
 ]
 
 
+def machine_family(name):
+    s = (name or "").strip().lower()
+    for rx, fam in FAMILIES:
+        if re.match(rx, s):
+            return fam
+    return s.split()[0] if s else "unknown"
+
+
+# family -> ABI decoder. Families without one still get a full record; only
+# float_abi is "unknown" and arch.abi is empty.
+DECODERS = {
+    "mips": _mips,
+    "arm": _arm,
+    "riscv": _riscv,
+    "power": _power,
+    "aarch64": _fixed_hard("aarch64"),
+    "x86_64": _fixed_hard("x86_64"),
+    "x86": _fixed_hard("x86"),
+}
+
+
 def _decode_arch(machine, flags, attrs):
-    for prefix, fn in ARCH:
-        if machine == prefix or (prefix != "ARM" and machine.startswith(prefix)):
-            return fn(flags, attrs)
-    return machine.lower().split(" ")[0] or "unknown", {}, "unknown"
+    family = machine_family(machine)
+    if family in DECODERS:
+        return DECODERS[family](flags, attrs)
+    return family, {}, "unknown"
 
 
 # --- time64 --------------------------------------------------------------------
