@@ -182,7 +182,9 @@ class Lint(unittest.TestCase):
     GOOD = ("FROM alpine@sha256:" + "a" * 64 + " AS f\n"
             "ADD --checksum=sha256:" + "b" * 64 + " https://x/tc.tar.xz /tc.tar\n"
             "FROM debian@sha256:" + "c" * 64 + "\nCOPY --from=f /tc /opt/tc\n"
-            "ENV TC_ID=zz-lint-test CC=/opt/tc/bin/x-gcc\n")
+            "ENV TC_ID=zz-lint-test CC=/opt/tc/bin/x-gcc\n"
+            'LABEL org.opencontainers.image.title="zz-lint-test" io.tcfp.tc_id="zz-lint-test" '
+            'io.tcfp.toolchain.url="https://x/tc.tar.xz" io.tcfp.toolchain.sha256="' + "b" * 64 + '"\n')
 
     def test_pinned_passes(self):
         self.assertEqual(self.lint_text(self.GOOD), [])
@@ -194,6 +196,12 @@ class Lint(unittest.TestCase):
         self.assertIn("not pinned", text)
         self.assertIn("apt-get", text)
         self.assertIn("build context", text)
+
+    def test_labels_must_match_the_toolchain(self):
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")
+        self.assertIn('io.tcfp.toolchain.url="https://x/tc.tar.xz"', text)
+        errs = self.lint_text(text.replace('io.tcfp.toolchain.sha256="' + "d" * 64, 'io.tcfp.toolchain.sha256="' + "e" * 64))
+        self.assertTrue(any("io.tcfp.toolchain.sha256" in e for e in errs))
 
     def test_scaffold_template_lints_clean(self):
         text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")

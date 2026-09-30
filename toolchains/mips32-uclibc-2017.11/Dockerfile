@@ -33,3 +33,7 @@ ENV TC_ID=mips32-uclibc-2017.11 \
     CC=/opt/tc/bin/mips-buildroot-linux-uclibc-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
+LABEL org.opencontainers.image.title="mips32-uclibc-2017.11" \
+      io.tcfp.tc_id="mips32-uclibc-2017.11" \
+      io.tcfp.toolchain.url="https://toolchains.bootlin.com/downloads/releases/toolchains/mips32/tarballs/mips32--uclibc--bleeding-edge-2017.11-1.tar.bz2" \
+      io.tcfp.toolchain.sha256="2c3e681918213d8dc1e71fbb347f1ae2e6f27f21a88709bdb09549a2bffdb2f7"

@@ -254,11 +254,12 @@ def _flags(args):
 def lint(tc_id):
     """Return (errors, facts). facts has toolchain_sha256, TC_ID, CC when found."""
     path = dockerfile(tc_id)
-    errs, facts, stages, tc_sums, env = [], {}, set(), [], {}
+    errs, facts, stages, tc_sums, env, labels = [], {}, set(), [], {}, {}
     for n, kw, args in instructions(path.read_text()):
         where = f"{path.relative_to(ROOT).as_posix()}:{n}"
         flags, toks = _flags(args)
         if kw == "FROM":
+            labels = {}                                  # only the final stage's labels reach the image
             ref = toks[0] if toks else ""
             if "$" in ref:
                 errs.append(f"{where}: FROM uses a variable ({ref}); pin the image literally")
@@ -299,6 +300,11 @@ def lint(tc_id):
                 k, eq, v = t.partition("=")
                 if eq:
                     env[k] = v
+        elif kw == "LABEL":
+            for t in shlex.split(args):
+                k, eq, v = t.partition("=")
+                if eq:
+                    labels[k] = v
     if len(tc_sums) != 1:
         errs.append(f"{path.relative_to(ROOT).as_posix()}: expected exactly one checksummed toolchain "
                     f"download (ADD --checksum=sha256:... URL {TOOLCHAIN_DEST}), found {len(tc_sums)}")
@@ -309,13 +315,32 @@ def lint(tc_id):
                     f"found {env.get('TC_ID')!r}")
     if not env.get("CC"):
         errs.append(f"{path.relative_to(ROOT).as_posix()}: ENV CC must name the cross gcc")
+    if len(tc_sums) == 1:
+        for k, v in static_labels(tc_id, facts.get("toolchain_url", ""), tc_sums[0]).items():
+            if labels.get(k) != v:
+                errs.append(f"{path.relative_to(ROOT).as_posix()}: final stage needs LABEL {k}=\"{v}\" "
+                            f"(found {labels.get(k)!r})")
     return errs, facts
 
 
 # --------------------------------------------------------------------------
 # Scaffolding a new toolchain
 # --------------------------------------------------------------------------
+def static_labels(tc_id, url, sha256):
+    """Labels that describe the toolchain. They live in the Dockerfile (plain
+    docker build gets them) because they only change when the toolchain does.
+    Labels that change for other reasons (repo URL, commit, the Dockerfile's own
+    hash) are added at build time instead."""
+    return {
+        "org.opencontainers.image.title": tc_id,
+        "io.tcfp.tc_id": tc_id,
+        "io.tcfp.toolchain.url": url,
+        "io.tcfp.toolchain.sha256": sha256,
+    }
+
+
 def dockerfile_text(tc_id, comment, url, sha256, cc):
+    labels = " \\\n      ".join(f'{k}="{v}"' for k, v in static_labels(tc_id, url, sha256).items())
     tools = "".join(f"ADD --checksum=sha256:{h} \\\n    {u} /debs/\n" for u, h in BUILD_TOOLS)
     return f"""# {comment}
 # Every input is pinned: base images by digest, downloads by sha256.
@@ -334,6 +359,7 @@ ENV TC_ID={tc_id} \\
     CC=/opt/tc/bin/{cc} \\
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
+LABEL {labels}
 """
 
 
@@ -686,22 +712,18 @@ def cmd_lint(a):
 
 def cmd_build(a):
     need_toolchain(a.tc_id)
-    facts = need_lint(a.tc_id)
+    need_lint(a.tc_id)
     tag = image_tag(a.tc_id)
     if a.push and not registry():
         die("--push needs TCFP_REGISTRY (e.g. ghcr.io/<owner>/toolchain-fingerprints)")
     if a.push and try_pull(tag):
         print(f"{tag} already in the registry (same Dockerfile hash); pulled it instead of building")
     else:
-        # Labels are set here, not as LABEL in the Dockerfile: the Dockerfile hash is
-        # the image's identity, and metadata (repo URL, commit) must not change it.
-        labels = [f"--label={l}" for l in a.label] + [f"--label={k}={v}" for k, v in (
-            ("org.opencontainers.image.title", a.tc_id),
-            ("io.tcfp.tc_id", a.tc_id),
-            ("io.tcfp.dockerfile_sha256", dockerfile_sha256(a.tc_id)),
-            ("io.tcfp.toolchain.url", facts.get("toolchain_url", "")),
-            ("io.tcfp.toolchain.sha256", facts.get("toolchain_sha256", "")),
-        )]
+        # Toolchain labels are LABELs in the Dockerfile (see static_labels). Labels that
+        # change for other reasons are added here, so they never change the Dockerfile
+        # hash: the repo URL and commit (passed by CI) and the Dockerfile's own hash.
+        labels = [f"--label={l}" for l in a.label] + [
+            f"--label=io.tcfp.dockerfile_sha256={dockerfile_sha256(a.tc_id)}"]
         docker("build", "--network=none", "--platform", PLATFORM, *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
         if a.push:
             docker("push", tag)
