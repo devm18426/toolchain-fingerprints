@@ -183,7 +183,9 @@ jobs:
     # On a PR that needed probing it fails on the first commit; the record job's
     # push starts a new run on the new head, where it passes.
     needs: [checks, record]
-    if: always()
+    # A manual run delivers its records as a PR (which gets its own 'ready'),
+    # so checking main's records here would only fail by design.
+    if: always() && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Earlier jobs
