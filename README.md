@@ -32,18 +32,28 @@ Nothing runs on a schedule: a record is redone only when its Dockerfile or the p
 |---|---|---|
 | `schema/fingerprint.schema.json` | contract | the only thing the two components share |
 | `toolchains/<id>/Dockerfile` | generator | one fully pinned toolchain per directory |
-| `generator/probe/` | generator | `probe.sh` runs in the image; `normalize.py` turns its raw output into a record |
+| `generator/probe/` | generator | `probe.sh` and the corpus: what runs inside the image |
+| `generator/normalize.py` | generator | turns raw probe output into a record; one small decoder per architecture |
 | `generator/probe/corpus/` | generator | small C/C++ programs linked by the probe (pthreads, select/clock_gettime, dlopen, libm, 64-bit division, exceptions) |
 | `generator/gen.py` | generator | lint, build, probe, merge, validate (stdlib Python only) |
 | `generator/tests/` | generator | `python -m unittest discover -s generator/tests` (no Docker needed) |
 | `data/fingerprints.json` | output | the dataset, validated against the schema |
+| `data/raw/<id>.json` | output | raw probe output per toolchain; records are re-derived from it |
 | `.github/workflows/` | CI | `ci.yml` (PR build/probe/record), `add-toolchain.yml` (issue bot), `release.yml` |
 
 ## Generating records
 
-A pinned toolchain always produces the same binaries, so a record is computed
-once. It is redone only when the toolchain's Dockerfile or the probe changes;
-both are hashed into the record's `provenance`. There is no scheduled recheck.
+A pinned toolchain always produces the same binaries, so a toolchain is probed
+once. Its raw probe output is kept in `data/raw/<id>.json`, and the record is
+derived from that by `generator/normalize.py`. So:
+
+| what changed | what happens | Docker? |
+|---|---|---|
+| the toolchain's Dockerfile, or `generator/probe/` | rebuild the image and re-probe | yes |
+| `generator/normalize.py` (a fix, a new field, a new architecture) | `gen.py merge` re-derives records from `data/raw/` | no |
+
+All of these inputs are hashed into the record's `provenance`. There is no
+scheduled recheck.
 
 One step per command:
 
@@ -104,3 +114,16 @@ TCFP_REGISTRY=ghcr.io/devm18426/toolchain-fingerprints python generator/gen.py p
 
 With a registry set, `status` also counts a record as stale until its image is
 in that registry.
+
+## Compatibility
+
+Data published later is meant to keep working with consumers written earlier.
+Within schema 2.x fields are only added. Enum-like fields that may grow are open
+(consumers treat unknown values as unknown), and architecture details live in
+the open-ended `arch.abi`. The published schema accepts unknown fields and values;
+`gen.py validate` is strict, and `gen.py validate --tolerant` checks the way a
+consumer would. See `docs/DESIGN.md` section 4.4.
+
+Adding an architecture: write a decoder in `generator/normalize.py` and register it
+in `ARCH`. Machines without a decoder still get a full record; only `float_abi`
+is `unknown` and `arch.abi` is empty.

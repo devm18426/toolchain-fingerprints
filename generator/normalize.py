@@ -1,8 +1,12 @@
 """Normalize the raw files probe.sh collects into one schema record.
 
-This lives in probe/ (not gen.py) on purpose: probe_version is the hash of
-this directory, so fixing an extraction bug here invalidates exactly the
-records it affects.
+Records are re-derived from the stored raw output (data/raw/) whenever this
+file changes (provenance.normalize_version), so improving extraction or adding
+an architecture never needs a Docker build or a new probe run.
+
+Adding an architecture: write one decoder below and register it in ARCH. It
+returns (family, abi, float_abi); abi is a flat dict of scalars that lands in
+the record's open-ended `arch.abi` object, so no schema or page change is needed.
 """
 import re
 
@@ -29,7 +33,8 @@ def _needed(dyn):
     return re.findall(r"\(NEEDED\).*?\[([^\]]+)\]", dyn)
 
 
-# --- MIPS e_flags / .MIPS.abiflags ---------------------------------------------
+# --- per-architecture ABI decoders -------------------------------------------
+# Each takes (e_flags, readelf -A text) and returns (family, abi, float_abi).
 _MIPS_ARCH = {0x0: "mips1", 0x1: "mips2", 0x2: "mips3", 0x3: "mips4", 0x4: "mips5",
               0x5: "mips32", 0x6: "mips64", 0x7: "mips32r2", 0x8: "mips64r2",
               0x9: "mips32r6", 0xa: "mips64r6"}
@@ -42,35 +47,74 @@ _MIPS_FP = [("soft float", "soft"), ("hard float (double precision)", "double"),
 def _mips(flags, attrs):
     fp_text = (_field(attrs, "FP ABI") or _field(attrs, "Tag_GNU_MIPS_ABI_FP")).lower()
     fp = next((v for k, v in _MIPS_FP if fp_text.startswith(k)), "unknown")
-    return {
+    abi = {
         "isa_level": _MIPS_ARCH.get(flags >> 28, f"unknown-{flags >> 28:#x}"),
         "nan": "2008" if flags & 0x400 else "legacy",
         "fp_abi": fp,
         "mips16": bool(flags & 0x04000000),
         "micromips": bool(flags & 0x02000000),
     }
+    return "mips", abi, {"soft": "soft", "unknown": "unknown"}.get(fp, "hard")
 
 
 def _arm(flags, attrs):
     vfp = _field(attrs, "Tag_ABI_VFP_args").lower()
     vfp_args = ("vfp" if "vfp registers" in vfp else "toolchain" if "toolchain" in vfp
                 else "compatible" if "compatible" in vfp else "base" if vfp else "none")
-    return {"eabi": flags >> 24, "vfp_args": vfp_args}
+    if vfp_args == "vfp" or flags & 0x400:            # EF_ARM_ABI_FLOAT_HARD
+        fl = "hard"
+    else:
+        fl = "softfp" if _field(attrs, "Tag_FP_arch") else "soft"
+    return "arm", {"eabi": flags >> 24, "vfp_args": vfp_args}, fl
 
 
-def _float_abi(machine, flags, attrs, mips, arm):
-    if mips:
-        return {"soft": "soft", "unknown": "unknown"}.get(mips["fp_abi"], "hard")
-    if arm:
-        if arm["vfp_args"] == "vfp" or flags & 0x400:
-            return "hard"
-        return "softfp" if _field(attrs, "Tag_FP_arch") else "soft"
-    return "unknown"
+def _riscv(flags, attrs):
+    # e_flags: RVC 0x1, float ABI 0x6 (0 soft, 2 single, 4 double, 6 quad), RVE 0x8, TSO 0x10
+    fabi = {0x0: "soft", 0x2: "single", 0x4: "double", 0x6: "quad"}[flags & 0x6]
+    abi = {"float_abi": fabi, "rvc": bool(flags & 0x1), "rve": bool(flags & 0x8), "tso": bool(flags & 0x10)}
+    arch = _field(attrs, "Tag_RISCV_arch")
+    if arch:
+        abi["isa"] = arch.strip('"')
+    return "riscv", abi, "soft" if fabi == "soft" else "hard"
+
+
+def _power(flags, attrs):
+    fp = _field(attrs, "Tag_GNU_Power_ABI_FP").lower()
+    abi = {"fp": fp or "unspecified"}
+    if flags & 0x3:                                   # EF_PPC64_ABI: 1 = ELFv1, 2 = ELFv2
+        abi["elf_abi"] = f"v{flags & 0x3}"
+    fl = "soft" if "soft" in fp else "hard" if "hard" in fp else "unknown"
+    return "power", abi, fl
+
+
+def _fixed_hard(family):
+    # AArch64 and x86 have a single hard-float procedure call standard
+    return lambda flags, attrs: (family, {}, "hard")
+
+
+# readelf "Machine:" prefix -> decoder. Unknown machines still get a full record,
+# only float_abi is "unknown" and arch.abi is empty.
+ARCH = [
+    ("MIPS", _mips),
+    ("ARM", _arm),                                    # exact match below, "AArch64" is separate
+    ("AArch64", _fixed_hard("aarch64")),
+    ("RISC-V", _riscv),
+    ("PowerPC", _power),
+    ("Advanced Micro Devices X86-64", _fixed_hard("x86_64")),
+    ("Intel 80386", _fixed_hard("x86")),
+]
+
+
+def _decode_arch(machine, flags, attrs):
+    for prefix, fn in ARCH:
+        if machine == prefix or (prefix != "ARM" and machine.startswith(prefix)):
+            return fn(flags, attrs)
+    return machine.lower().split(" ")[0] or "unknown", {}, "unknown"
 
 
 # --- time64 --------------------------------------------------------------------
 def _time64(kind, elf64, time_bits, libc_ver, uclibc_cfg, kmin):
-    """How the libc's time calls reach the kernel. See docs/DESIGN.md Â§5.2 item 1.
+    """How the libc's time calls reach the kernel. See docs/DESIGN.md section 5.2, item 1.
 
     Checked by disassembling a static select()/clock_gettime() program for each
     MIPS toolchain: uClibc-ng with __UCLIBC_USE_TIME64__ issues only the
@@ -106,9 +150,10 @@ def normalize(raw, tc_id):
     interp = m.group(1) if m else ""
 
     ldso, libc_soname = g("ldso_soname"), g("libc_soname")
-    both = ldso + interp
+    both = ldso + " " + interp
+    # glibc loaders: ld-linux*.so.N (most arches), ld.so.1 (MIPS, PowerPC32), ld64.so.N (PowerPC64, s390x)
     kind = ("musl" if "musl" in both else "uclibc" if "uClibc" in both
-            else "glibc" if ("ld-linux" in both or "ld.so" in both) else "unknown")
+            else "glibc" if re.search(r"\bld(64)?(-linux[\w.-]*)?\.so\b", both) else "unknown")
     if kind == "musl" and not libc_soname and interp:
         libc_soname = interp.rsplit("/", 1)[-1]      # musl's loader IS libc
 
@@ -144,10 +189,9 @@ def normalize(raw, tc_id):
     c_corpus = [n for n in corpus if n != "cxx"]
     needed_corpus = sorted({s for n in c_corpus for s in _needed(g(f"corpus.{n}.d"))} | set(_needed(dyn)))
     has_hash, has_gnu = bool(re.search(r"\(HASH\)", dyn)), bool(re.search(r"\(GNU_HASH\)", dyn))
-    m = re.search(r"^\s*-march=\S*\s+(\S+)", g("gcc_target"), re.M)
+    m = re.search(r"^[ \t]*-march=\S*[ \t]+(\S*)[ \t]*$", g("gcc_target"), re.M)   # empty on some arches
 
-    mips = _mips(flags, attrs) if machine.startswith("MIPS") else None
-    arm = _arm(flags, attrs) if machine == "ARM" else None
+    family, arch_abi, float_abi = _decode_arch(machine, flags, attrs)
 
     rec = {
         "tc_id": tc_id,
@@ -162,7 +206,7 @@ def normalize(raw, tc_id):
             "machine": machine,
         },
         "isa": _field(attrs, "ISA"),
-        "float_abi": _float_abi(machine, flags, attrs, mips, arm),
+        "float_abi": float_abi,
         "pie_default": etype == "DYN",
         "needed": _needed(dyn),
         "dynamic_ok": ok("link_dyn"),
@@ -182,10 +226,12 @@ def normalize(raw, tc_id):
         req = {v for n in c_corpus for v in re.findall(r"GLIBC_(\d[\d.]*)", g(f"corpus.{n}.V"))}
         rec["glibc"] = {"requires": _max_version(req),
                         "provides": _max_version(set(re.findall(r"GLIBC_(\d[\d.]*)", g("libc_V"))))}
-    if mips:
-        rec["mips"] = mips
-    if arm:
-        rec["arm"] = arm
+    rec["arch"] = {"family": family, "abi": arch_abi}
+    # 2.1 fields kept for existing consumers; new consumers should read arch.abi
+    if family == "mips":
+        rec["mips"] = arch_abi
+    if family == "arm":
+        rec["arm"] = arch_abi
     rec["raw"] = {"class": cls, "data": data, "type": _field(hdr, "Type"), "flags": _field(hdr, "Flags"),
                   "fp_abi": _field(attrs, "FP ABI") or _field(attrs, "Tag_ABI_VFP_args")}
     return rec

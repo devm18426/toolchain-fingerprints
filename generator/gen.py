@@ -42,8 +42,14 @@ ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = ROOT / "schema" / "fingerprint.schema.json"
 PROBE_DIR = ROOT / "generator" / "probe"
 TOOLCHAINS = ROOT / "toolchains"
+NORMALIZER = ROOT / "generator" / "normalize.py"
 CACHE = ROOT / ".cache" / "records"
+RAW_CACHE = ROOT / ".cache" / "raw"
 DATA = ROOT / "data" / "fingerprints.json"
+RAW_DATA = ROOT / "data" / "raw"            # probe output per toolchain: records re-derive from it
+# Toolchain tarballs contain x86-64 host binaries; the base images are multi-arch
+# indexes, so pin the platform or an arm64 host would pull the wrong base.
+PLATFORM = "linux/amd64"
 DOWNLOADS = ROOT / ".cache" / "downloads"
 TOOLCHAIN_DEST = "/tc.tar"          # the ADD with this destination is the toolchain
 
@@ -66,7 +72,7 @@ BUILD_TOOLS = [
     (f"{_SNAP}/p/pkgconf/pkg-config_1.8.1-1_amd64.deb", "312b2bdeff4671f8e0d589c124554890e944dd083061e9ad6f129bc76a970765"),
 ]
 
-sys.path.insert(0, str(PROBE_DIR))
+sys.path.insert(0, str(NORMALIZER.parent))
 from normalize import normalize  # noqa: E402
 
 
@@ -107,21 +113,30 @@ def _is_type(v, t):
     return isinstance(v, _TYPES[t])
 
 
-def validate(inst, sch, root=None, path="$"):
-    """Return a list of error strings; empty means valid."""
+def validate(inst, sch, root=None, path="$", strict=False):
+    """Return a list of error strings; empty means valid.
+
+    The published schema is deliberately tolerant so that consumers holding an
+    older 2.x schema still accept newer 2.x data: objects allow unknown
+    properties and open enums are plain strings listing x-known-values.
+    strict=True (what the generator uses) additionally rejects unknown
+    properties and values outside x-known-values, so typos cannot ship.
+    """
     root = root if root is not None else sch
     errs = []
     if "$ref" in sch:
         node = root
         for part in sch["$ref"].lstrip("#/").split("/"):
             node = node[part]
-        errs += validate(inst, node, root, path)
+        errs += validate(inst, node, root, path, strict)
     if "type" in sch:
         types = sch["type"] if isinstance(sch["type"], list) else [sch["type"]]
         if not any(_is_type(inst, t) for t in types):
             return errs + [f"{path}: expected {'/'.join(types)}, got {type(inst).__name__}"]
     if "enum" in sch and inst not in sch["enum"]:
         errs.append(f"{path}: {inst!r} not in {sch['enum']}")
+    if strict and "x-known-values" in sch and inst not in sch["x-known-values"]:
+        errs.append(f"{path}: {inst!r} not in x-known-values {sch['x-known-values']} (add it to the schema)")
     if "const" in sch and inst != sch["const"]:
         errs.append(f"{path}: must be {sch['const']!r}")
     if isinstance(inst, str) and "pattern" in sch and not re.search(sch["pattern"], inst):
@@ -133,26 +148,26 @@ def validate(inst, sch, root=None, path="$"):
             if k not in inst:
                 errs.append(f"{path}: missing required '{k}'")
         props = sch.get("properties", {})
-        extra = sch.get("additionalProperties", True)
+        extra = sch.get("additionalProperties", False if (strict and "properties" in sch) else True)
         for k, v in inst.items():
             if k in props:
-                errs += validate(v, props[k], root, f"{path}.{k}")
+                errs += validate(v, props[k], root, f"{path}.{k}", strict)
             elif extra is False:
-                errs.append(f"{path}: unexpected property '{k}'")
+                errs.append(f"{path}: unexpected property '{k}' (add it to the schema)")
             elif isinstance(extra, dict):
-                errs += validate(v, extra, root, f"{path}.{k}")
+                errs += validate(v, extra, root, f"{path}.{k}", strict)
     if isinstance(inst, list) and "items" in sch:
         for i, v in enumerate(inst):
-            errs += validate(v, sch["items"], root, f"{path}[{i}]")
+            errs += validate(v, sch["items"], root, f"{path}[{i}]", strict)
     return errs
 
 
-def record_errors(rec):
-    return validate(rec, {"$ref": "#/$defs/record"}, schema())
+def record_errors(rec, strict=True):
+    return validate(rec, {"$ref": "#/$defs/record"}, schema(), strict=strict)
 
 
-def data_errors(doc):
-    errs = validate(doc, schema())
+def data_errors(doc, strict=True):
+    errs = validate(doc, schema(), strict=strict)
     ids = [r.get("tc_id") for r in doc.get("toolchains", []) if isinstance(r, dict)]
     dup = {i for i in ids if ids.count(i) > 1}
     if dup:
@@ -163,8 +178,14 @@ def data_errors(doc):
 # --------------------------------------------------------------------------
 # Provenance inputs
 # --------------------------------------------------------------------------
+def normalize_version():
+    """sha256 of generator/normalize.py. A change only needs records re-derived from
+    data/raw/, not new probe runs, so it never costs a Docker build."""
+    return hashlib.sha256(lf_bytes(NORMALIZER)).hexdigest()
+
+
 def probe_version():
-    """sha256 over every file in generator/probe/ (path + LF-normalized content)."""
+    """sha256 over every file in generator/probe/ (what runs inside the image)."""
     h = hashlib.sha256()
     for p in sorted(PROBE_DIR.rglob("*")):
         if p.is_file() and "__pycache__" not in p.parts:
@@ -424,7 +445,7 @@ def image_ref(tag):
 
 def try_pull(tag):
     """Pull tag if the registry has it. True means it exists (and is now local)."""
-    p = subprocess.run(["docker", "pull", "-q", tag], capture_output=True, text=True)
+    p = subprocess.run(["docker", "pull", "-q", "--platform", PLATFORM, tag], capture_output=True, text=True)
     return p.returncode == 0
 
 
@@ -450,7 +471,8 @@ def probe_tar():
 
 def run_probe(image):
     """Send the probe into the container on stdin; get the raw facts back as a tar on stdout."""
-    cmd = ["docker", "run", "--rm", "-i", "--network=none", "--entrypoint", "/bin/sh", image, "-c",
+    cmd = ["docker", "run", "--rm", "-i", "--network=none", "--platform", PLATFORM,
+           "--entrypoint", "/bin/sh", image, "-c",
            "mkdir -p /probe && tar -xf - -C /probe && exec bash /probe/probe.sh"]
     p = subprocess.run(cmd, input=probe_tar(), capture_output=True)
     if p.returncode != 0:
@@ -465,6 +487,10 @@ def run_probe(image):
 
 # --------------------------------------------------------------------------
 # Record bookkeeping
+#
+# A record depends on three inputs:
+#   Dockerfile + probe (+ registry)  -> the raw probe output (needs Docker to redo)
+#   normalize.py                     -> the record, re-derived from that raw output
 # --------------------------------------------------------------------------
 def load_data():
     return {r["tc_id"]: r for r in json.loads(DATA.read_text())["toolchains"]} if DATA.exists() else {}
@@ -478,18 +504,28 @@ def load_cache():
     return out
 
 
+def load_raw(directory, tc_id):
+    f = directory / f"{tc_id}.json"
+    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else None
+
+
 def in_registry(rec):
     """With TCFP_REGISTRY set, a record only counts if its image came from that registry."""
     return not registry() or (rec or {}).get("provenance", {}).get("image_digest", "").startswith(registry() + "@")
 
 
-def is_current(rec, tc_id, pv):
+def probe_current(rec, tc_id, pv):
+    """The raw probe output behind rec is still valid (no Docker work needed)."""
     p = (rec or {}).get("provenance", {})
     return (p.get("dockerfile_sha256") == dockerfile_sha256(tc_id) and p.get("probe_version") == pv
             and in_registry(rec))
 
 
-def stale_reason(rec, tc_id, pv):
+def is_current(rec, tc_id, pv, nv):
+    return probe_current(rec, tc_id, pv) and rec["provenance"].get("normalize_version") == nv
+
+
+def stale_reason(rec, tc_id, pv, nv=None):
     if not rec:
         return "never probed"
     p = rec.get("provenance", {})
@@ -500,7 +536,29 @@ def stale_reason(rec, tc_id, pv):
         why.append("probe changed")
     if not in_registry(rec):
         why.append(f"image not in {registry()}")
+    if nv and p.get("normalize_version") != nv:
+        why.append("normalizer changed")
     return ", ".join(why)
+
+
+def rederive(rec, raw, tc_id, nv):
+    """Re-run normalize.py on stored raw output, keeping the probe's provenance."""
+    new = normalize(raw, tc_id)
+    new["provenance"] = {**rec["provenance"], "normalize_version": nv}
+    return new
+
+
+def state_of(tc, data, cache, pv, nv):
+    """current | renormalize (merge fixes it, no Docker) | probed (merge) | stale (needs a probe) | refused"""
+    if lint(tc)[0]:
+        return "refused"
+    if is_current(data.get(tc), tc, pv, nv):
+        return "current"
+    if probe_current(cache.get(tc), tc, pv) and load_raw(RAW_CACHE, tc):
+        return "probed"
+    if probe_current(data.get(tc), tc, pv) and load_raw(RAW_DATA, tc):
+        return "renormalize"
+    return "stale"
 
 
 # --------------------------------------------------------------------------
@@ -541,7 +599,7 @@ def cmd_build(a):
     else:
         labels = [f"--label={l}" for l in a.label] + [f"--label=io.tcfp.tc_id={a.tc_id}",
                   f"--label=io.tcfp.dockerfile_sha256={dockerfile_sha256(a.tc_id)}"]
-        docker("build", "--network=none", *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
+        docker("build", "--network=none", "--platform", PLATFORM, *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
         if a.push:
             docker("push", tag)
     print(f"image {tag} = {image_ref(tag)}")
@@ -552,7 +610,7 @@ def cmd_pull(a):
     if not registry():
         die("pull needs TCFP_REGISTRY (e.g. ghcr.io/<owner>/toolchain-fingerprints)")
     tag = image_tag(a.tc_id)
-    docker("pull", tag)
+    docker("pull", "--platform", PLATFORM, tag)
     print(f"image {tag} = {image_ref(tag)}")
 
 
@@ -573,58 +631,61 @@ def cmd_probe(a):
         "image_digest": iid,
         "toolchain_sha256": facts["toolchain_sha256"],
         "probe_version": probe_version(),
+        "normalize_version": normalize_version(),
     }
     errs = record_errors(rec)
     if errs:
         die("record does not validate:\n  " + "\n  ".join(errs))
+    write_json(RAW_CACHE / f"{a.tc_id}.json", dict(sorted(raw.items())))
     out = CACHE / f"{a.tc_id}.json"
     write_json(out, rec)
-    print(f"wrote {out.relative_to(ROOT).as_posix()}")
+    print(f"wrote {out.relative_to(ROOT).as_posix()} (+ raw probe output)")
 
 
 def cmd_status(a):
-    pv, data, cache = probe_version(), load_data(), load_cache()
+    pv, nv, data, cache = probe_version(), normalize_version(), load_data(), load_cache()
+    ids = toolchain_ids()
+    rows = []
+    for tc in ids:
+        st = state_of(tc, data, cache, pv, nv)
+        reason = {"stale": stale_reason(data.get(tc), tc, pv, nv), "renormalize": "normalizer changed",
+                  "refused": "unpinned inputs, see gen.py lint"}.get(st, "")
+        rows.append({"tc_id": tc, "state": st, "image": image_tag(tc), "reason": reason})
+    orphans = sorted(set(data) - set(ids))
     if a.json:
-        rows = []
-        for tc in toolchain_ids():
-            errs, _ = lint(tc)
-            state = ("refused" if errs else "current" if is_current(data.get(tc), tc, pv)
-                     else "probed" if is_current(cache.get(tc), tc, pv) else "stale")
-            rows.append({"tc_id": tc, "state": state, "image": image_tag(tc),
-                         "reason": stale_reason(data.get(tc), tc, pv) if state == "stale" else ""})
-        orphans = sorted(set(data) - set(toolchain_ids()))
         print(json.dumps({"toolchains": rows, "orphans": orphans,
-                          "stale": [r["tc_id"] for r in rows if r["state"] == "stale"]}))
+                          "stale": [r["tc_id"] for r in rows if r["state"] == "stale"],
+                          "renormalize": [r["tc_id"] for r in rows if r["state"] == "renormalize"]}))
         sys.exit(0)
-    todo = 0
-    for tc in toolchain_ids():
-        errs, _ = lint(tc)
-        built = "built" if image_id(image_tag(tc)) else "not built"
-        if errs:
-            state, todo = f"REFUSED: {len(errs)} unpinned input(s), see gen.py lint {tc}", todo + 1
-        elif is_current(data.get(tc), tc, pv):
-            state = "up to date"
-        elif is_current(cache.get(tc), tc, pv):
-            state, todo = "probed, run gen.py merge", todo + 1
+    text = {"current": "up to date", "probed": "probed, run gen.py merge",
+            "renormalize": "normalizer changed; gen.py merge re-derives it (no Docker)"}
+    for r in rows:
+        st = r["state"]
+        if st == "stale":
+            built = "built" if image_id(r["image"]) else "not built"
+            msg = f"stale ({r['reason']}), image {built}"
+        elif st == "refused":
+            msg = f"REFUSED: see gen.py lint {r['tc_id']}"
         else:
-            state, todo = f"stale ({stale_reason(data.get(tc), tc, pv)}), image {built}", todo + 1
-        print(f"{tc:28} {state}")
-    for tc in sorted(set(data) - set(toolchain_ids())):
+            msg = text[st]
+        print(f"{r['tc_id']:28} {msg}")
+    for tc in orphans:
         print(f"{tc:28} orphan record (no Dockerfile); gen.py merge drops it")
-        todo += 1
-    sys.exit(1 if todo else 0)
+    sys.exit(0 if all(r["state"] == "current" for r in rows) and not orphans else 1)
 
 
 def cmd_merge(a):
-    pv, data, cache, ids = probe_version(), load_data(), load_cache(), set(toolchain_ids())
-    recs, stale = {}, []
+    pv, nv, data, cache, ids = probe_version(), normalize_version(), load_data(), load_cache(), set(toolchain_ids())
+    recs, raws, stale = {}, {}, []
     for tc in sorted(ids):
-        if is_current(cache.get(tc), tc, pv):
-            recs[tc] = cache[tc]
+        craw, draw = load_raw(RAW_CACHE, tc), load_raw(RAW_DATA, tc)
+        if probe_current(cache.get(tc), tc, pv) and craw:
+            recs[tc], raws[tc] = rederive(cache[tc], craw, tc, nv), craw
+        elif probe_current(data.get(tc), tc, pv) and draw:
+            recs[tc], raws[tc] = rederive(data[tc], draw, tc, nv), draw
         elif tc in data:
             recs[tc] = data[tc]
-            if not is_current(data[tc], tc, pv):
-                stale.append(f"{tc} ({stale_reason(data[tc], tc, pv)})")
+            stale.append(f"{tc} ({stale_reason(data[tc], tc, pv, nv)})")
         else:
             stale.append(f"{tc} (never probed, left out)")
     for tc, r in recs.items():
@@ -639,8 +700,16 @@ def cmd_merge(a):
     errs = data_errors(doc)
     if errs:
         die("merged data does not validate:\n  " + "\n  ".join(errs))
+    old = json.loads(DATA.read_text()) if DATA.exists() else None
+    if old and old["toolchains"] == doc["toolchains"] and old["schema_version"] == doc["schema_version"]:
+        doc["generated_at"] = old["generated_at"]          # no change: keep the file byte-identical
     write_json(DATA, doc)
-    print(f"wrote {DATA.relative_to(ROOT).as_posix()} ({len(recs)} toolchains)")
+    for tc, raw in raws.items():
+        write_json(RAW_DATA / f"{tc}.json", raw)
+    for f in RAW_DATA.glob("*.json"):
+        if f.stem not in recs:
+            f.unlink()
+    print(f"wrote {DATA.relative_to(ROOT).as_posix()} ({len(recs)} toolchains) and data/raw/")
     dropped = sorted(set(data) - ids)
     if dropped:
         print(f"dropped orphan records: {', '.join(dropped)}")
@@ -653,7 +722,8 @@ def cmd_validate(a):
     bad = 0
     for f in files:
         doc = json.loads(Path(f).read_text())
-        errs = data_errors(doc) if "schema_version" in doc else record_errors(doc)
+        errs = (data_errors(doc, not a.tolerant) if "schema_version" in doc
+                else record_errors(doc, not a.tolerant))
         for e in errs:
             print(f"{f}: {e}")
         if not errs:
@@ -690,6 +760,8 @@ def main():
     sub.add_parser("merge", help="merge current records into the data file").set_defaults(fn=cmd_merge)
     p = sub.add_parser("validate", help="validate records or data files")
     p.add_argument("files", nargs="*")
+    p.add_argument("--tolerant", action="store_true",
+                   help="validate the way a consumer would (unknown properties/values allowed)")
     p.set_defaults(fn=cmd_validate)
     a = ap.parse_args()
     a.fn(a)

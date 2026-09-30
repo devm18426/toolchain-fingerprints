@@ -2,15 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "fingerprint.schema.json",
   "title": "Cross-toolchain ABI fingerprints",
-  "x-version": "2.2",
-  "description": "The only contract between the generator and the web page. Versioning: adding an optional field is a minor bump; renaming, removing, or changing a field's type or enum is a major bump. The page refuses a major version it does not know.",
+  "x-version": "2.3",
+  "description": "The only contract between the generator and its consumers. Compatibility rules, so that data published later still works with consumers written earlier: (1) within a major version, fields are only ever added, never renamed, removed or retyped; (2) consumers must ignore properties they do not know; (3) fields marked with x-known-values are open enums: new values may appear in a minor version, and consumers must treat a value they do not know as unknown; (4) consumers must refuse a major version they do not know. This schema is therefore tolerant (unknown properties and values validate); the generator validates in strict mode, where x-known-values and the listed properties are exhaustive.",
   "type": "object",
   "required": [
     "schema_version",
     "generated_at",
     "toolchains"
   ],
-  "additionalProperties": false,
   "properties": {
     "schema_version": {
       "type": "string",
@@ -54,7 +53,6 @@
         "static_ok",
         "provenance"
       ],
-      "additionalProperties": false,
       "properties": {
         "tc_id": {
           "type": "string",
@@ -72,10 +70,10 @@
             "kind",
             "soname"
           ],
-          "additionalProperties": false,
           "properties": {
             "kind": {
-              "enum": [
+              "type": "string",
+              "x-known-values": [
                 "glibc",
                 "musl",
                 "uclibc",
@@ -96,7 +94,6 @@
           "required": [
             "soname"
           ],
-          "additionalProperties": false,
           "properties": {
             "soname": {
               "$ref": "#/$defs/soname",
@@ -115,7 +112,6 @@
             "endian",
             "machine"
           ],
-          "additionalProperties": false,
           "properties": {
             "class": {
               "enum": [
@@ -139,13 +135,14 @@
           "description": "ISA line from readelf -A on the probe binary; empty if the arch has none."
         },
         "float_abi": {
-          "enum": [
+          "description": "From the ELF attributes/flags, not free text: MIPS FP ABI, ARM Tag_ABI_VFP_args / e_flags.",
+          "type": "string",
+          "x-known-values": [
             "hard",
             "soft",
             "softfp",
             "unknown"
-          ],
-          "description": "From the ELF attributes/flags, not free text: MIPS FP ABI, ARM Tag_ABI_VFP_args / e_flags."
+          ]
         },
         "pie_default": {
           "type": "boolean",
@@ -181,13 +178,14 @@
           "description": "Compiler default -march (gcc -Q --help=target)."
         },
         "hash_style": {
-          "enum": [
+          "description": "DT_HASH / DT_GNU_HASH in a default dynamic link. Old loaders only read DT_HASH.",
+          "type": "string",
+          "x-known-values": [
             "sysv",
             "gnu",
             "both",
             "none"
-          ],
-          "description": "DT_HASH / DT_GNU_HASH in a default dynamic link. Old loaders only read DT_HASH."
+          ]
         },
         "time": {
           "type": "object",
@@ -195,7 +193,6 @@
             "time_t_bits",
             "time64_syscalls"
           ],
-          "additionalProperties": false,
           "properties": {
             "time_t_bits": {
               "enum": [
@@ -204,13 +201,14 @@
               ]
             },
             "time64_syscalls": {
-              "enum": [
+              "description": "none: only legacy time syscalls. fallback: tries *_time64 (Linux >= 5.1) and falls back on ENOSYS. required: *_time64 only, fails with ENOSYS before Linux 5.1.",
+              "type": "string",
+              "x-known-values": [
                 "none",
                 "fallback",
                 "required",
                 "unknown"
-              ],
-              "description": "none: only legacy time syscalls. fallback: tries *_time64 (Linux >= 5.1) and falls back on ENOSYS. required: *_time64 only, fails with ENOSYS before Linux 5.1."
+              ]
             }
           }
         },
@@ -220,7 +218,6 @@
             "headers",
             "min"
           ],
-          "additionalProperties": false,
           "properties": {
             "headers": {
               "$ref": "#/$defs/version",
@@ -238,7 +235,6 @@
             "requires",
             "provides"
           ],
-          "additionalProperties": false,
           "description": "glibc records only.",
           "properties": {
             "requires": {
@@ -260,7 +256,6 @@
             "mips16",
             "micromips"
           ],
-          "additionalProperties": false,
           "properties": {
             "isa_level": {
               "type": "string",
@@ -274,7 +269,8 @@
               "description": "e_flags EF_MIPS_NAN2008. A mismatch is refused by the kernel/loader."
             },
             "fp_abi": {
-              "enum": [
+              "type": "string",
+              "x-known-values": [
                 "double",
                 "single",
                 "soft",
@@ -292,7 +288,8 @@
             "micromips": {
               "type": "boolean"
             }
-          }
+          },
+          "description": "Same content as arch.abi for MIPS; kept for 2.1/2.2 consumers."
         },
         "arm": {
           "type": "object",
@@ -300,21 +297,55 @@
             "eabi",
             "vfp_args"
           ],
-          "additionalProperties": false,
           "properties": {
             "eabi": {
               "type": "integer",
               "minimum": 0
             },
             "vfp_args": {
-              "enum": [
+              "description": "Tag_ABI_VFP_args: vfp = hard-float calling convention.",
+              "type": "string",
+              "x-known-values": [
                 "base",
                 "vfp",
                 "toolchain",
                 "compatible",
                 "none"
+              ]
+            }
+          },
+          "description": "Same content as arch.abi for ARM; kept for 2.1/2.2 consumers."
+        },
+        "arch": {
+          "type": "object",
+          "description": "Architecture-specific ABI facts, decoded from ELF e_flags and attributes. abi is open-ended so that a new architecture needs no schema change: its keys depend on family (mips: isa_level, nan, fp_abi, mips16, micromips; arm: eabi, vfp_args; riscv: float_abi, rvc, rve, tso, isa; power: fp, elf_abi; aarch64/x86_64/x86: none).",
+          "required": [
+            "family",
+            "abi"
+          ],
+          "properties": {
+            "family": {
+              "type": "string",
+              "x-known-values": [
+                "mips",
+                "arm",
+                "aarch64",
+                "riscv",
+                "power",
+                "x86_64",
+                "x86"
               ],
-              "description": "Tag_ABI_VFP_args: vfp = hard-float calling convention."
+              "description": "Unrecognized machines get the first word of readelf's Machine, lowercased."
+            },
+            "abi": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "integer",
+                  "boolean"
+                ]
+              }
             }
           }
         },
@@ -328,7 +359,6 @@
             "toolchain_sha256",
             "probe_version"
           ],
-          "additionalProperties": false,
           "properties": {
             "dockerfile": {
               "type": "string",
@@ -347,7 +377,11 @@
             },
             "probe_version": {
               "$ref": "#/$defs/sha256",
-              "description": "sha256 of generator/probe/."
+              "description": "sha256 of generator/probe/ (what runs inside the image)."
+            },
+            "normalize_version": {
+              "$ref": "#/$defs/sha256",
+              "description": "sha256 of generator/normalize.py. When only this changes, records are re-derived from data/raw/ without re-probing."
             }
           }
         },

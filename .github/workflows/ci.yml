@@ -1,8 +1,9 @@
 name: ci
 
 # On a PR: check everything, then build + push + probe only the toolchains whose
-# records are stale (new or changed Dockerfile, or a probe change), and commit
-# the new records back to the PR branch. The PR you merge therefore always
+# raw probe output is stale (new or changed Dockerfile, or a probe change), and
+# commit the new records back to the PR branch. A change to normalize.py alone
+# needs no Docker at all: the record job re-derives records from data/raw/. The PR you merge therefore always
 # carries data/fingerprints.json that matches its Dockerfiles.
 #
 # Images are content-addressed (tag = Dockerfile hash): a tag that already
@@ -38,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       stale: ${{ steps.plan.outputs.stale }}
+      probe: ${{ steps.plan.outputs.probe }}
       any: ${{ steps.plan.outputs.any }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,9 +48,13 @@ jobs:
         run: |
           export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
           python3 generator/gen.py status --json > status.json
-          stale=$(python3 -c 'import json; print(json.dumps(json.load(open("status.json"))["stale"]))')
-          echo "stale=$stale" >> "$GITHUB_OUTPUT"
-          [ "$stale" = "[]" ] && echo "any=false" >> "$GITHUB_OUTPUT" || echo "any=true" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          st = json.load(open("status.json"))
+          print("stale=" + json.dumps(st["stale"]))                      # need Docker: build + probe
+          print("probe=" + ("true" if st["stale"] else "false"))
+          print("any=" + ("true" if st["stale"] or st["renormalize"] else "false"))
+          PY
           python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           rows = json.load(open("status.json"))["toolchains"]
@@ -64,7 +70,7 @@ jobs:
     # Only PRs from branches of this repo (the add-toolchain bot or you) may push images.
     needs: [checks, plan]
     if: >-
-      needs.plan.outputs.any == 'true' && github.event_name == 'pull_request' &&
+      needs.plan.outputs.probe == 'true' && github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
@@ -107,7 +113,9 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: record-${{ matrix.tc_id }}
-          path: .cache/records/${{ matrix.tc_id }}.json
+          path: |
+            .cache/records/${{ matrix.tc_id }}.json
+            .cache/raw/${{ matrix.tc_id }}.json
           include-hidden-files: true
           if-no-files-found: error
 
@@ -115,6 +123,11 @@ jobs:
     # Commit the new records to the PR branch. Uses the GitHub App token so the
     # push triggers CI again (a GITHUB_TOKEN push would not).
     needs: [plan, build]
+    # Runs after the builds, or alone when only normalize.py changed (build skipped).
+    if: >-
+      always() && needs.plan.outputs.any == 'true' && github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - id: app
@@ -129,7 +142,7 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: record-*
-          path: .cache/records
+          path: .cache
           merge-multiple: true
       - name: Merge records and commit
         env:
@@ -140,12 +153,13 @@ jobs:
           export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
           python3 generator/gen.py merge
           python3 generator/gen.py status
-          if git diff --quiet -- data/fingerprints.json; then echo "no data change"; exit 0; fi
+          if [ -z "$(git status --porcelain -- data)" ]; then echo "no data change"; exit 0; fi
           uid=$(gh api "/users/${SLUG}[bot]" --jq .id)
           git config user.name "${SLUG}[bot]"
           git config user.email "${uid}+${SLUG}[bot]@users.noreply.github.com"
-          git add data/fingerprints.json
-          git commit -m "Record fingerprints: $(python3 -c 'import json, os; print(", ".join(json.loads(os.environ["STALE"])))')"
+          git add data
+          msg=$(python3 -c 'import json, os; s = json.loads(os.environ["STALE"]); print("Record fingerprints: " + ", ".join(s) if s else "Re-derive records for the normalizer change")')
+          git commit -m "$msg"
           git push
 
   ready:

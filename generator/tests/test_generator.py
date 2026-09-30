@@ -5,23 +5,40 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import gen  # noqa: E402
-from normalize import _arm, _mips, _time64, normalize  # noqa: E402
+from normalize import _arm, _decode_arch, _mips, _riscv, _time64, normalize  # noqa: E402
 
 
 class Flags(unittest.TestCase):
     def test_mips_r1_legacy_nan_fpxx(self):
-        m = _mips(0x50001007, "FP ABI: Hard float (32-bit CPU, Any FPU)")
-        self.assertEqual(m, {"isa_level": "mips32", "nan": "legacy", "fp_abi": "xx", "mips16": False, "micromips": False})
+        fam, abi, fl = _mips(0x50001007, "FP ABI: Hard float (32-bit CPU, Any FPU)")
+        self.assertEqual((fam, fl), ("mips", "hard"))
+        self.assertEqual(abi, {"isa_level": "mips32", "nan": "legacy", "fp_abi": "xx", "mips16": False, "micromips": False})
 
     def test_mips_r2_nan2008_soft(self):
-        m = _mips(0x70001407, "FP ABI: Soft float")
-        self.assertEqual((m["isa_level"], m["nan"], m["fp_abi"]), ("mips32r2", "2008", "soft"))
+        _, abi, fl = _mips(0x70001407, "FP ABI: Soft float")
+        self.assertEqual((abi["isa_level"], abi["nan"], abi["fp_abi"], fl), ("mips32r2", "2008", "soft", "soft"))
 
     def test_arm_hard_float(self):
-        self.assertEqual(_arm(0x05000400, "Tag_ABI_VFP_args: VFP registers"), {"eabi": 5, "vfp_args": "vfp"})
+        self.assertEqual(_arm(0x05000400, "Tag_ABI_VFP_args: VFP registers"),
+                         ("arm", {"eabi": 5, "vfp_args": "vfp"}, "hard"))
 
-    def test_arm_soft(self):
-        self.assertEqual(_arm(0x05000200, "Tag_CPU_name: \"7-A\""), {"eabi": 5, "vfp_args": "none"})
+    def test_arm_soft_and_softfp(self):
+        self.assertEqual(_arm(0x05000200, 'Tag_CPU_name: "7-A"')[2], "soft")
+        self.assertEqual(_arm(0x05000200, "Tag_FP_arch: VFPv3")[2], "softfp")
+
+    def test_riscv_lp64d_rvc(self):
+        fam, abi, fl = _riscv(0x5, '  Tag_RISCV_arch: "rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0"')
+        self.assertEqual((fam, fl, abi["float_abi"], abi["rvc"], abi["rve"]), ("riscv", "hard", "double", True, False))
+        self.assertTrue(abi["isa"].startswith("rv64i"))
+        self.assertEqual(_riscv(0x0, "")[2], "soft")
+
+    def test_dispatch_and_unknown_machines(self):
+        self.assertEqual(_decode_arch("AArch64", 0, "")[:3:2], ("aarch64", "hard"))
+        self.assertEqual(_decode_arch("ARM", 0x05000400, "")[0], "arm")
+        self.assertEqual(_decode_arch("Advanced Micro Devices X86-64", 0, "")[0], "x86_64")
+        self.assertEqual(_decode_arch("PowerPC64", 0x2, "Tag_GNU_Power_ABI_FP: Hard float")[1]["elf_abi"], "v2")
+        # a machine nobody has written a decoder for still yields a usable record
+        self.assertEqual(_decode_arch("LoongArch", 0x43, ""), ("loongarch", {}, "unknown"))
 
 
 class Time64(unittest.TestCase):
@@ -80,25 +97,63 @@ class Normalize(unittest.TestCase):
         self.assertNotIn("glibc", r)
 
 
+class March(unittest.TestCase):
+    def test_empty_default_march_does_not_swallow_the_next_option(self):
+        # AArch64 gcc prints an empty -march default
+        raw = dict(Normalize.RAW, gcc_target="  -march=ARCH  \t\t\n  -mbig-endian  \t\t[disabled]\n")
+        self.assertEqual(normalize(raw, "t")["march"], "")
+
+
 class Registry(unittest.TestCase):
     def test_record_needs_registry_image_when_registry_set(self):
         import os
         tc = gen.toolchain_ids()[0]
         rec = {"provenance": {"dockerfile_sha256": gen.dockerfile_sha256(tc), "probe_version": "pv",
-                              "image_digest": "sha256:" + "0" * 64}}
+                              "normalize_version": "nv", "image_digest": "sha256:" + "0" * 64}}
         old = os.environ.pop("TCFP_REGISTRY", None)
         try:
-            self.assertTrue(gen.is_current(rec, tc, "pv"))
+            self.assertTrue(gen.is_current(rec, tc, "pv", "nv"))
+            self.assertFalse(gen.is_current(rec, tc, "pv", "nv2"))
+            self.assertTrue(gen.probe_current(rec, tc, "pv"))          # normalizer change needs no probe
+            self.assertEqual(gen.stale_reason(rec, tc, "pv", "nv2"), "normalizer changed")
             os.environ["TCFP_REGISTRY"] = "ghcr.io/o/r"
-            self.assertFalse(gen.is_current(rec, tc, "pv"))
-            self.assertEqual(gen.stale_reason(rec, tc, "pv"), "image not in ghcr.io/o/r")
+            self.assertFalse(gen.is_current(rec, tc, "pv", "nv"))
+            self.assertEqual(gen.stale_reason(rec, tc, "pv", "nv"), "image not in ghcr.io/o/r")
             rec["provenance"]["image_digest"] = "ghcr.io/o/r@sha256:" + "0" * 64
-            self.assertTrue(gen.is_current(rec, tc, "pv"))
+            self.assertTrue(gen.is_current(rec, tc, "pv", "nv"))
             self.assertEqual(gen.image_tag(tc), f"ghcr.io/o/r:{tc}-{gen.dockerfile_sha256(tc)[:12]}")
         finally:
             os.environ.pop("TCFP_REGISTRY", None)
             if old is not None:
                 os.environ["TCFP_REGISTRY"] = old
+
+
+class Compatibility(unittest.TestCase):
+    """The published schema must accept data from a later 2.x generator."""
+
+    def rec(self):
+        import json
+        return json.loads(gen.DATA.read_text())["toolchains"][0]
+
+    def test_current_data_is_strictly_valid(self):
+        import json
+        self.assertEqual(gen.data_errors(json.loads(gen.DATA.read_text())), [])
+
+    def test_unknown_property_is_tolerated_but_not_by_the_generator(self):
+        r = dict(self.rec(), some_future_field={"x": 1})
+        self.assertEqual(gen.record_errors(r, strict=False), [])
+        self.assertTrue(any("some_future_field" in e for e in gen.record_errors(r, strict=True)))
+
+    def test_new_open_enum_value_is_tolerated_but_not_by_the_generator(self):
+        r = self.rec()
+        r = dict(r, libc=dict(r["libc"], kind="bionic"))
+        self.assertEqual(gen.record_errors(r, strict=False), [])
+        self.assertTrue(any("x-known-values" in e for e in gen.record_errors(r, strict=True)))
+
+    def test_closed_fields_still_enforced(self):
+        r = self.rec()
+        r = dict(r, elf=dict(r["elf"], endian="middle"))
+        self.assertTrue(gen.record_errors(r, strict=False))
 
 
 class Lint(unittest.TestCase):
