@@ -114,7 +114,7 @@ def _decode_arch(machine, flags, attrs):
 
 # --- time64 --------------------------------------------------------------------
 def _time64(kind, elf64, time_bits, libc_ver, uclibc_cfg, kmin):
-    """How the libc's time calls reach the kernel. See docs/DESIGN.md section 5.2, item 1.
+    """How the libc's time calls reach the kernel.
 
     Checked by disassembling a static select()/clock_gettime() program for each
     MIPS toolchain: uClibc-ng with __UCLIBC_USE_TIME64__ issues only the
