@@ -686,15 +686,22 @@ def cmd_lint(a):
 
 def cmd_build(a):
     need_toolchain(a.tc_id)
-    need_lint(a.tc_id)
+    facts = need_lint(a.tc_id)
     tag = image_tag(a.tc_id)
     if a.push and not registry():
         die("--push needs TCFP_REGISTRY (e.g. ghcr.io/<owner>/toolchain-fingerprints)")
     if a.push and try_pull(tag):
         print(f"{tag} already in the registry (same Dockerfile hash); pulled it instead of building")
     else:
-        labels = [f"--label={l}" for l in a.label] + [f"--label=io.tcfp.tc_id={a.tc_id}",
-                  f"--label=io.tcfp.dockerfile_sha256={dockerfile_sha256(a.tc_id)}"]
+        # Labels are set here, not as LABEL in the Dockerfile: the Dockerfile hash is
+        # the image's identity, and metadata (repo URL, commit) must not change it.
+        labels = [f"--label={l}" for l in a.label] + [f"--label={k}={v}" for k, v in (
+            ("org.opencontainers.image.title", a.tc_id),
+            ("io.tcfp.tc_id", a.tc_id),
+            ("io.tcfp.dockerfile_sha256", dockerfile_sha256(a.tc_id)),
+            ("io.tcfp.toolchain.url", facts.get("toolchain_url", "")),
+            ("io.tcfp.toolchain.sha256", facts.get("toolchain_sha256", "")),
+        )]
         docker("build", "--network=none", "--platform", PLATFORM, *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
         if a.push:
             docker("push", tag)
