@@ -33,3 +33,7 @@ ENV TC_ID=mips32-glibc-2026.08 \
     CC=/opt/tc/bin/mips-buildroot-linux-gnu-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
+LABEL org.opencontainers.image.title="mips32-glibc-2026.08" \
+      io.tcfp.tc_id="mips32-glibc-2026.08" \
+      io.tcfp.toolchain.url="https://toolchains.bootlin.com/downloads/releases/toolchains/mips32/tarballs/mips32--glibc--stable-2026.08-1.tar.xz" \
+      io.tcfp.toolchain.sha256="f3d2ca00826b5cf159a0486edf8179bbe3df10eb275acf332c6c0614ff8b8500"

@@ -33,3 +33,7 @@ ENV TC_ID=mips32-musl-2026.08 \
     CC=/opt/tc/bin/mips-buildroot-linux-musl-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
+LABEL org.opencontainers.image.title="mips32-musl-2026.08" \
+      io.tcfp.tc_id="mips32-musl-2026.08" \
+      io.tcfp.toolchain.url="https://toolchains.bootlin.com/downloads/releases/toolchains/mips32/tarballs/mips32--musl--stable-2026.08-1.tar.xz" \
+      io.tcfp.toolchain.sha256="0190387211125195f71b8397d02ccaaa15c6eb4ecbb94533d8a904065c0cc410"

@@ -55,8 +55,11 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           st = json.load(open("status.json"))
-          print("stale=" + json.dumps(st["stale"]))                      # need Docker: build + probe
-          print("probe=" + ("true" if st["stale"] else "false"))
+          # A matrix holds at most 256 jobs. Bigger imports go in batches: each
+          # records commit starts a new run, which builds the next batch.
+          batch = st["stale"][:200]
+          print("stale=" + json.dumps(batch))                            # need Docker: build + probe
+          print("probe=" + ("true" if batch else "false"))
           print("any=" + ("true" if st["stale"] or st["renormalize"] else "false"))
           PY
           python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
@@ -129,10 +132,12 @@ jobs:
     # with a PR. Uses the GitHub App token so the push triggers CI again (a
     # GITHUB_TOKEN push would not).
     needs: [plan, build]
-    # Runs after the builds, or alone when only normalize.py changed (build skipped).
+    # Runs after the builds (also when some failed: the others are still
+    # recorded, and 'ready' names the failures), or alone when only
+    # normalize.py changed (build skipped).
     if: >-
       always() && needs.plan.outputs.any == 'true' &&
-      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      needs.build.result != 'cancelled' &&
       (github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
@@ -159,13 +164,16 @@ jobs:
         run: |
           export TCFP_REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
           python3 generator/gen.py merge
-          python3 generator/gen.py status
+          python3 generator/gen.py status || true      # remaining stale ones: see 'ready'
           if [ -z "$(git status --porcelain -- data)" ]; then echo "no data change"; exit 0; fi
           uid=$(gh api "/users/${SLUG}[bot]" --jq .id)
           git config user.name "${SLUG}[bot]"
           git config user.email "${uid}+${SLUG}[bot]@users.noreply.github.com"
           git add data
-          msg=$(python3 -c 'import json, os; s = json.loads(os.environ["STALE"]); print("Record fingerprints: " + ", ".join(s) if s else "Re-derive records for the normalizer change")')
+          msg=$(python3 -c 'import json, os
+          s = json.loads(os.environ["STALE"])
+          print("Re-derive records for the normalizer change" if not s else
+                "Record fingerprints: " + ", ".join(s) if len(s) <= 5 else f"Record fingerprints for {len(s)} toolchains")')
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             branch="refresh-records-$GITHUB_RUN_ID"
             git switch -c "$branch"
@@ -183,7 +191,9 @@ jobs:
     # On a PR that needed probing it fails on the first commit; the record job's
     # push starts a new run on the new head, where it passes.
     needs: [checks, record]
-    if: always()
+    # A manual run delivers its records as a PR (which gets its own 'ready'),
+    # so checking main's records here would only fail by design.
+    if: always() && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Earlier jobs

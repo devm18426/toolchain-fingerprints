@@ -33,3 +33,7 @@ ENV TC_ID=armv7-eabihf-musl-2026.08 \
     CC=/opt/tc/bin/arm-buildroot-linux-musleabihf-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
+LABEL org.opencontainers.image.title="armv7-eabihf-musl-2026.08" \
+      io.tcfp.tc_id="armv7-eabihf-musl-2026.08" \
+      io.tcfp.toolchain.url="https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--stable-2026.08-1.tar.xz" \
+      io.tcfp.toolchain.sha256="9147bafae4aa272321a3c6440d04d83b7e23411b2d344f875541d84c4444ba9b"

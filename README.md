@@ -38,6 +38,10 @@ gh attestation verify oci://ghcr.io/devm18426/toolchain-fingerprints:mips32-ucli
 Open an **Add toolchain** issue with an id and a tarball URL. CI turns it into a
 pull request, builds the image and records its fingerprint.
 
+To add a whole Bootlin release, run **Actions → import-bootlin → Run workflow**
+with the release (e.g. `2026.08-1`), optionally filtered by arch, libc or channel.
+It opens one pull request for the lot.
+
 To do it locally instead (needs Docker and Python 3):
 
 ```sh

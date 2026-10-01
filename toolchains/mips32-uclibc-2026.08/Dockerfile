@@ -33,3 +33,7 @@ ENV TC_ID=mips32-uclibc-2026.08 \
     CC=/opt/tc/bin/mips-buildroot-linux-uclibc-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
+LABEL org.opencontainers.image.title="mips32-uclibc-2026.08" \
+      io.tcfp.tc_id="mips32-uclibc-2026.08" \
+      io.tcfp.toolchain.url="https://toolchains.bootlin.com/downloads/releases/toolchains/mips32/tarballs/mips32--uclibc--stable-2026.08-1.tar.xz" \
+      io.tcfp.toolchain.sha256="bc4529aec62251d2dc59215944354b571dd8a66c4cfb17a552663f50a6d9e290"

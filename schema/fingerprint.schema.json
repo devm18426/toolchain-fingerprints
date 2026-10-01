@@ -326,16 +326,7 @@
           "properties": {
             "family": {
               "type": "string",
-              "x-known-values": [
-                "mips",
-                "arm",
-                "aarch64",
-                "riscv",
-                "power",
-                "x86_64",
-                "x86"
-              ],
-              "description": "Unrecognized machines get the first word of readelf's Machine, lowercased."
+              "description": "Architecture family: mips, arm, aarch64, riscv, power, x86_64, x86, loongarch, m68k, microblaze, nios2, openrisc, s390, sh, sparc, xtensa, arc, blackfin, csky; any other machine gets the first word of readelf's Machine, lowercased. Free-form on purpose: new machines must not fail validation."
             },
             "abi": {
               "type": "object",

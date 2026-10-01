@@ -39,6 +39,18 @@ class Flags(unittest.TestCase):
         self.assertEqual(_decode_arch("PowerPC64", 0x2, "Tag_GNU_Power_ABI_FP: Hard float")[1]["elf_abi"], "v2")
         # a machine nobody has written a decoder for still yields a usable record
         self.assertEqual(_decode_arch("LoongArch", 0x43, ""), ("loongarch", {}, "unknown"))
+        self.assertEqual(_decode_arch("Renesas / SuperH SH", 0, "")[0], "sh")
+        self.assertEqual(_decode_arch("Some Future CPU", 0, "")[0], "some")
+
+    def test_families_cover_bootlin_and_uname_names(self):
+        from normalize import machine_family
+        for name, fam in [("MC68000", "m68k"), ("Xilinx MicroBlaze", "microblaze"), ("microblazeel", "microblaze"),
+                          ("Altera Nios II", "nios2"), ("OpenRISC 1000", "openrisc"), ("IBM S/390", "s390"),
+                          ("s390x", "s390"), ("sh4", "sh"), ("Sparc v9", "sparc"), ("sparc64", "sparc"),
+                          ("Tensilica Xtensa Processor", "xtensa"), ("ARCv2", "arc"), ("aarch64", "aarch64"),
+                          ("armv7l", "arm"), ("i686", "x86"), ("x86_64", "x86_64"), ("ppc64le", "power"),
+                          ("Analog Devices Blackfin", "blackfin"), ("C-SKY", "csky")]:
+            self.assertEqual(machine_family(name), fam, name)
 
 
 class Time64(unittest.TestCase):
@@ -170,7 +182,9 @@ class Lint(unittest.TestCase):
     GOOD = ("FROM alpine@sha256:" + "a" * 64 + " AS f\n"
             "ADD --checksum=sha256:" + "b" * 64 + " https://x/tc.tar.xz /tc.tar\n"
             "FROM debian@sha256:" + "c" * 64 + "\nCOPY --from=f /tc /opt/tc\n"
-            "ENV TC_ID=zz-lint-test CC=/opt/tc/bin/x-gcc\n")
+            "ENV TC_ID=zz-lint-test CC=/opt/tc/bin/x-gcc\n"
+            'LABEL org.opencontainers.image.title="zz-lint-test" io.tcfp.tc_id="zz-lint-test" '
+            'io.tcfp.toolchain.url="https://x/tc.tar.xz" io.tcfp.toolchain.sha256="' + "b" * 64 + '"\n')
 
     def test_pinned_passes(self):
         self.assertEqual(self.lint_text(self.GOOD), [])
@@ -182,6 +196,12 @@ class Lint(unittest.TestCase):
         self.assertIn("not pinned", text)
         self.assertIn("apt-get", text)
         self.assertIn("build context", text)
+
+    def test_labels_must_match_the_toolchain(self):
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")
+        self.assertIn('io.tcfp.toolchain.url="https://x/tc.tar.xz"', text)
+        errs = self.lint_text(text.replace('io.tcfp.toolchain.sha256="' + "d" * 64, 'io.tcfp.toolchain.sha256="' + "e" * 64))
+        self.assertTrue(any("io.tcfp.toolchain.sha256" in e for e in errs))
 
     def test_scaffold_template_lints_clean(self):
         text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")
