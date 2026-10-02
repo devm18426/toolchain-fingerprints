@@ -10,13 +10,15 @@ name: ci
 # whatever is stale there and get the records as a PR: that is how records
 # probed elsewhere, or a first push, get their images into GHCR.
 #
+# It does not run on pushes to main: every change arrives through a PR that
+# already passed 'ready', and the release workflow re-checks the records
+# before it publishes anything.
+#
 # Images are content-addressed (tag = Dockerfile hash): a tag that already
 # exists in GHCR is pulled, never rebuilt, so one hash maps to one digest.
 
 on:
   pull_request:
-  push:
-    branches: [main]
   workflow_dispatch: {}
 
 permissions:
@@ -131,12 +133,13 @@ jobs:
     # Commit the new records to the PR branch, or on a manual run to a new branch
     # with a PR. Uses the GitHub App token so the push triggers CI again (a
     # GITHUB_TOKEN push would not).
-    needs: [plan, build]
+    needs: [checks, plan, build]
     # Runs after the builds (also when some failed: the others are still
     # recorded, and 'ready' names the failures), or alone when only
-    # normalize.py changed (build skipped).
+    # normalize.py changed (build skipped). Never when the checks failed: a
+    # broken normalizer must not re-derive and commit records.
     if: >-
-      always() && needs.plan.outputs.any == 'true' &&
+      always() && needs.checks.result == 'success' && needs.plan.outputs.any == 'true' &&
       needs.build.result != 'cancelled' &&
       (github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
