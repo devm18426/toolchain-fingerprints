@@ -52,3 +52,7 @@ python generator/gen.py merge
 ```
 
 Then open a pull request with `toolchains/<id>/` and `data/`.
+
+Some toolchains nobody distributes any more, such as TILE-Gx and TILEPro, are
+compiled from pinned upstream sources inside their own Dockerfile
+(`gen.py new-from-source`). The image is still built once and reused.

@@ -5,6 +5,8 @@ Each step is its own command, so a failure points at one step:
 
     gen.py new      TC_ID URL     download a toolchain tarball, hash it, write toolchains/TC_ID/Dockerfile
     gen.py import-bootlin RELEASE  do that for every Bootlin toolchain of a release (filters available)
+    gen.py new-from-source TC_ID --target T --linux-arch A URL...
+                                  a toolchain nobody distributes: compiled from pinned sources in its Dockerfile
     gen.py status                 what is up to date, stale, or invalid (read-only)
     gen.py lint     [TC_ID...]    check that every Dockerfile input is pinned
     gen.py build    TC_ID [--push] docker build toolchains/TC_ID (RUN steps have no network)
@@ -44,6 +46,12 @@ ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = ROOT / "schema" / "fingerprint.schema.json"
 PROBE_DIR = ROOT / "generator" / "probe"
 TOOLCHAINS = ROOT / "toolchains"
+BUILD_SCRIPT = ROOT / "generator" / "build-cross.sh"    # inlined into source-built Dockerfiles
+# Source builds need a host compiler. It comes from an old Debian (new enough for
+# the old GCCs these builds use to compile cleanly), with apt pinned to a snapshot.
+SOURCE_BUILD_BASE = "debian:buster-slim@sha256:bb3dc79fddbca7e8903248ab916bb775c96ec61014b3d02b4f06043b604726dc"
+SOURCE_BUILD_APT = "20240701T000000Z"
+SNAPSHOT_URL = re.compile(r"https?://snapshot\.debian\.org/archive/[\w-]+/\d{8}T\d{6}Z")
 NORMALIZER = ROOT / "generator" / "normalize.py"
 CACHE = ROOT / ".cache" / "records"
 RAW_CACHE = ROOT / ".cache" / "raw"
@@ -224,9 +232,17 @@ SHA = re.compile(r"^sha256:([0-9a-f]{64})$")
 
 
 def instructions(text):
-    """Yield (lineno, KEYWORD, args) with continuations joined and comments dropped."""
-    buf, start = "", None
+    """Yield (lineno, KEYWORD, args) with continuations joined and comments dropped.
+    A heredoc body (RUN <<'EOF' ... EOF) is appended to its instruction's args."""
+    buf, start, heredoc = "", None, None
     for n, line in enumerate(text.splitlines(), 1):
+        if heredoc:
+            if line.strip() == heredoc[1]:
+                yield heredoc[0][0], heredoc[0][1], heredoc[0][2]
+                heredoc = None
+            else:
+                heredoc[0][2] += "\n" + line
+            continue
         s = line.strip()
         if not buf and (not s or s.startswith("#")):
             continue
@@ -238,12 +254,16 @@ def instructions(text):
             continue
         buf += s
         kw, _, args = buf.partition(" ")
-        yield start, kw.upper(), args.strip()
+        m = re.search(r"<<-?(['\"]?)(\w+)\1", args)
+        if m:
+            heredoc = ([start, kw.upper(), args.strip()], m.group(2))
+        else:
+            yield start, kw.upper(), args.strip()
         buf, start = "", None
 
 
 def _flags(args):
-    toks = shlex.split(args)
+    toks = shlex.split(args.split("\n", 1)[0])
     flags = {}
     while toks and toks[0].startswith("--"):
         k, _, v = toks.pop(0)[2:].partition("=")
@@ -252,9 +272,19 @@ def _flags(args):
 
 
 def lint(tc_id):
-    """Return (errors, facts). facts has toolchain_sha256, TC_ID, CC when found."""
+    """Return (errors, facts). facts has toolchain_sha256/url, source_build, TC_ID, CC.
+
+    Two accepted shapes:
+    - prebuilt: exactly one ADD --checksum of the toolchain tarball to /tc.tar,
+      and RUN steps that need no network (the build runs with --network=none);
+    - source build (gen.py new-from-source): one or more ADD --checksum of source
+      tarballs to /src/, compiled by RUN steps whose only network use is apt from
+      a dated snapshot.debian.org archive. toolchain_sha256 is then the sha256 of
+      the sorted source checksums, one per line.
+    """
     path = dockerfile(tc_id)
     errs, facts, stages, tc_sums, env, labels = [], {}, set(), [], {}, {}
+    src, runs = [], []
     for n, kw, args in instructions(path.read_text()):
         where = f"{path.relative_to(ROOT).as_posix()}:{n}"
         flags, toks = _flags(args)
@@ -282,6 +312,8 @@ def lint(tc_id):
                     elif toks[-1] == TOOLCHAIN_DEST:
                         tc_sums.append(m.group(1))
                         facts["toolchain_url"] = s
+                    elif toks[-1].startswith("/src/"):
+                        src.append((s, m.group(1)))
                 else:
                     errs.append(f"{where}: {kw} {s} reads the build context, which the Dockerfile hash "
                                 f"does not cover; download it with ADD --checksum instead")
@@ -289,10 +321,7 @@ def lint(tc_id):
             for f in flags:
                 if f in ("network", "mount", "security"):
                     errs.append(f"{where}: RUN --{f} is not allowed (RUN steps must be offline and hermetic)")
-            m = re.search(r"\b(wget|curl|apt-get|apt|apk|pip3?|git|npm|opkg|yum|dnf)\b", args)
-            if m:
-                errs.append(f"{where}: RUN uses {m.group(1)}; RUN steps build without network, so every "
-                            f"download must be an ADD --checksum=sha256:... instead")
+            runs.append((where, args))
         elif kw == "ONBUILD":
             errs.append(f"{where}: ONBUILD is not allowed")
         elif kw == "ENV":
@@ -305,9 +334,28 @@ def lint(tc_id):
                 k, eq, v = t.partition("=")
                 if eq:
                     labels[k] = v
-    if len(tc_sums) != 1:
-        errs.append(f"{path.relative_to(ROOT).as_posix()}: expected exactly one checksummed toolchain "
-                    f"download (ADD --checksum=sha256:... URL {TOOLCHAIN_DEST}), found {len(tc_sums)}")
+    rel = path.relative_to(ROOT).as_posix()
+    source_build = not tc_sums and bool(src)
+    facts["source_build"] = source_build
+    for where, args in runs:
+        if source_build:
+            for url in re.findall(r"https?://[^\s'\"]+", args):
+                if not SNAPSHOT_URL.match(url):
+                    errs.append(f"{where}: RUN fetches {url}; a source build may only use apt from "
+                                f"snapshot.debian.org/archive/<archive>/<date>")
+            m = re.search(r"\b(wget|curl|apk|pip3?|git|npm|opkg|yum|dnf)\b", args)
+        else:
+            m = re.search(r"\b(wget|curl|apt-get|apt|apk|pip3?|git|npm|opkg|yum|dnf)\b", args)
+        if m:
+            errs.append(f"{where}: RUN uses {m.group(1)}; every download must be an "
+                        f"ADD --checksum=sha256:... instead")
+    if source_build:
+        facts["toolchain_sha256"] = hashlib.sha256("\n".join(sorted(h for _, h in src)).encode()).hexdigest()
+        facts["toolchain_url"] = " ".join(sorted(u for u, _ in src))
+    elif len(tc_sums) != 1 or src:
+        errs.append(f"{rel}: expected exactly one checksummed toolchain download (ADD --checksum=sha256:... "
+                    f"URL {TOOLCHAIN_DEST}) or, for a source build, checksummed sources in /src/ only; "
+                    f"found {len(tc_sums)} toolchain and {len(src)} source downloads")
     else:
         facts["toolchain_sha256"] = tc_sums[0]
     if env.get("TC_ID") != tc_id:
@@ -315,8 +363,8 @@ def lint(tc_id):
                     f"found {env.get('TC_ID')!r}")
     if not env.get("CC"):
         errs.append(f"{path.relative_to(ROOT).as_posix()}: ENV CC must name the cross gcc")
-    if len(tc_sums) == 1:
-        for k, v in static_labels(tc_id, facts.get("toolchain_url", ""), tc_sums[0]).items():
+    if "toolchain_sha256" in facts:
+        for k, v in static_labels(tc_id, facts["toolchain_url"], facts["toolchain_sha256"]).items():
             if labels.get(k) != v:
                 errs.append(f"{path.relative_to(ROOT).as_posix()}: final stage needs LABEL {k}=\"{v}\" "
                             f"(found {labels.get(k)!r})")
@@ -377,6 +425,86 @@ class _Hashing(io.RawIOBase):
         if n:
             self.h.update(memoryview(b)[:n])
         return n
+
+
+def dockerfile_source_text(tc_id, comment, target, linux_arch, cc, sources):
+    """Dockerfile that compiles the toolchain from pinned sources in a build stage
+    and ships /opt/tc on the same runtime base as every other toolchain image."""
+    adds = "".join(f"ADD --checksum=sha256:{h} \\\n    {u} /src/\n" for u, h in sources)
+    tools = "".join(f"ADD --checksum=sha256:{h} \\\n    {u} /debs/\n" for u, h in BUILD_TOOLS)
+    snap = f"http://snapshot.debian.org/archive"
+    apt = (f"printf 'deb [check-valid-until=no] {snap}/debian/{SOURCE_BUILD_APT} buster main\\n"
+           f"deb [check-valid-until=no] {snap}/debian/{SOURCE_BUILD_APT} buster-updates main\\n"
+           f"deb [check-valid-until=no] {snap}/debian-security/{SOURCE_BUILD_APT} buster/updates main\\n'"
+           f" > /etc/apt/sources.list")
+    labels = " \\\n      ".join(f'{k}="{v}"' for k, v in static_labels(
+        tc_id, " ".join(sorted(u for u, _ in sources)),
+        hashlib.sha256("\n".join(sorted(h for _, h in sources)).encode()).hexdigest()).items())
+    script = BUILD_SCRIPT.read_text(encoding="utf-8").rstrip("\n")
+    return f"""# {comment}
+# Built from source: nobody distributes this toolchain any more. Every source
+# tarball is pinned by sha256, the build host is a pinned Debian image with apt
+# from a dated snapshot, and the build script is inlined below, so this file's
+# hash covers everything that goes into the toolchain.
+
+FROM {SOURCE_BUILD_BASE} AS build
+RUN {apt} \\
+ && apt-get -o Acquire::Check-Valid-Until=false update \\
+ && apt-get install -y --no-install-recommends build-essential bison flex gawk texinfo file m4 \\
+      xz-utils bzip2 perl python3 \\
+ && rm -rf /var/lib/apt/lists/*
+{adds}ENV TARGET={target} LINUX_ARCH={linux_arch}
+RUN <<'BUILD'
+{script}
+BUILD
+
+FROM {DEBIAN}
+# build tools (make, patchelf, patch, xz, bzip2, pkg-config), pinned .debs
+{tools}RUN dpkg -i /debs/*.deb && rm -rf /debs
+COPY --from=build /opt/tc /opt/tc
+ENV TC_ID={tc_id} \\
+    CC=/opt/tc/bin/{cc} \\
+    PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WORKDIR /work
+LABEL {labels}
+"""
+
+
+def hash_url(url):
+    """sha256 of a download, streamed."""
+    proc = subprocess.Popen(["curl", "-fsSL", "--retry", "3", url], stdout=subprocess.PIPE)
+    h = hashlib.sha256()
+    for chunk in iter(lambda: proc.stdout.read(1 << 20), b""):
+        h.update(chunk)
+    if proc.wait():
+        raise ValueError(f"download failed: {url}")
+    return h.hexdigest()
+
+
+def cmd_new_from_source(a):
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", a.tc_id):
+        die(f"bad TC_ID {a.tc_id!r}")
+    if (TOOLCHAINS / a.tc_id).exists():
+        die(f"toolchains/{a.tc_id} already exists")
+    need = ("binutils-", "gcc-", "glibc-", "linux-", "gmp-", "mpfr-", "mpc-")
+    names = [u.rsplit("/", 1)[-1] for u in a.urls]
+    missing = [n for n in need if sum(x.startswith(n) for x in names) != 1]
+    if missing:
+        die(f"need exactly one source tarball for each of {', '.join(n.rstrip('-') for n in need)}; "
+            f"problem with: {', '.join(n.rstrip('-') for n in missing)}")
+    sources = []
+    for u in a.urls:
+        print(f"hashing {u}", flush=True)
+        sources.append((u, hash_url(u)))
+    df = dockerfile(a.tc_id)
+    df.parent.mkdir(parents=True)
+    df.write_text(dockerfile_source_text(a.tc_id, a.comment or f"{a.tc_id}, built from source", a.target,
+                                         a.linux_arch, f"{a.target}-gcc", sources), newline="\n")
+    errs, _ = lint(a.tc_id)
+    if errs:
+        shutil.rmtree(df.parent)
+        die("generated Dockerfile does not lint (this is a bug):\n  " + "\n  ".join(errs))
+    print(f"wrote {df.relative_to(ROOT).as_posix()}; building it compiles the whole toolchain (an hour or more)")
 
 
 def inspect_tarball(url):
@@ -712,7 +840,7 @@ def cmd_lint(a):
 
 def cmd_build(a):
     need_toolchain(a.tc_id)
-    need_lint(a.tc_id)
+    facts = need_lint(a.tc_id)
     tag = image_tag(a.tc_id)
     if a.push and not registry():
         die("--push needs TCFP_REGISTRY (e.g. ghcr.io/<owner>/toolchain-fingerprints)")
@@ -724,7 +852,10 @@ def cmd_build(a):
         # hash: the repo URL and commit (passed by CI) and the Dockerfile's own hash.
         labels = [f"--label={l}" for l in a.label] + [
             f"--label=io.tcfp.dockerfile_sha256={dockerfile_sha256(a.tc_id)}"]
-        docker("build", "--network=none", "--platform", PLATFORM, *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
+        # Source builds fetch their host compiler with apt (lint allows only a dated
+        # snapshot.debian.org); everything else builds with no network at all.
+        net = "--network=default" if facts.get("source_build") else "--network=none"
+        docker("build", net, "--platform", PLATFORM, *labels, "-t", tag, str(TOOLCHAINS / a.tc_id))
         if a.push:
             docker("push", tag)
     print(f"image {tag} = {image_ref(tag)}")
@@ -866,6 +997,13 @@ def main():
     p.add_argument("--cc", help="gcc name in the tarball's bin/ (default: the longest *-gcc)")
     p.add_argument("--comment", help="first line of the Dockerfile (default: tarball name)")
     p.set_defaults(fn=cmd_new)
+    p = sub.add_parser("new-from-source", help="scaffold a toolchain compiled from pinned sources")
+    p.add_argument("tc_id")
+    p.add_argument("urls", nargs="+", help="binutils, gcc, glibc, linux, gmp, mpfr and mpc tarball URLs")
+    p.add_argument("--target", required=True, help="GNU triple, e.g. tilegx-linux-gnu")
+    p.add_argument("--linux-arch", required=True, help="kernel ARCH for the headers, e.g. tile")
+    p.add_argument("--comment", help="first line of the Dockerfile")
+    p.set_defaults(fn=cmd_new_from_source)
     p = sub.add_parser("import-bootlin", help="scaffold every Bootlin toolchain of a release")
     p.add_argument("release", help="Bootlin release, e.g. 2026.08-1")
     p.add_argument("--arch", nargs="*", default=[], help="only these arch directories, e.g. aarch64 mips32")
