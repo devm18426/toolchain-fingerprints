@@ -1,6 +1,6 @@
 {
   "schema_version": "2.3",
-  "generated_at": "2026-10-02T04:19:54Z",
+  "generated_at": "2026-10-02T13:02:59Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -20438,6 +20438,187 @@
         "dockerfile_sha256": "f52b5f35f9312e4a22f9d4d4080ffee7b4c60d3d51204be09a5acf841a3b566b",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:c03a074f7cbf63d7a98930cddc859afea6bd7a6f4b2a0467c994f7c1730ff7f5",
         "toolchain_sha256": "1654a9173b8138c101facf59708ea736029ae3cca2f27fe2e084257fc8815cbb",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "c8aef9d6c95a434a1ccb2d0b2943db5103a45ad474f70f3e4193c6e16927c41d"
+      }
+    },
+    {
+      "tc_id": "tilegx-glibc-2.27",
+      "triple": "tilegx-linux-gnu",
+      "gcc_version": "7.5.0",
+      "libc": {
+        "kind": "glibc",
+        "soname": "libc.so.6",
+        "version": "2.27"
+      },
+      "ldso": {
+        "soname": "ld.so.1"
+      },
+      "interp": "/lib/ld.so.1",
+      "elf": {
+        "class": "64",
+        "endian": "little",
+        "machine": "Tilera TILE-Gx multicore architecture family"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": false,
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld.so.1",
+        "libBrokenLocale.so.1",
+        "libSegFault.so",
+        "libanl.so.1",
+        "libc.so.6",
+        "libcidn.so.1",
+        "libcrypt.so.1",
+        "libdl.so.2",
+        "libm.so.6",
+        "libmemusage.so",
+        "libnsl.so.1",
+        "libnss_compat.so.2",
+        "libnss_db.so.2",
+        "libnss_dns.so.2",
+        "libnss_files.so.2",
+        "libnss_hesiod.so.2",
+        "libpcprofile.so",
+        "libpthread.so.0",
+        "libresolv.so.2",
+        "librt.so.1",
+        "libthread_db.so.1",
+        "libutil.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.16.18",
+        "min": "3.2.0"
+      },
+      "glibc": {
+        "requires": "2.17",
+        "provides": "2.27"
+      },
+      "arch": {
+        "family": "tilegx",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/tilegx-glibc-2.27/Dockerfile",
+        "dockerfile_sha256": "ec5f178466c06a3d5208779af6bf2c0c6717a506a2a51e1a30c34e777cd86433",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:ac5342b96f421561c0348de73c816d95e3b29021b3ac12f15239b1cfce554fea",
+        "toolchain_sha256": "62ad9fa8a78f4190a6de54de9c1cf5c821349d8ec022ce7c1e3e2bb867358fe3",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "c8aef9d6c95a434a1ccb2d0b2943db5103a45ad474f70f3e4193c6e16927c41d"
+      }
+    },
+    {
+      "tc_id": "tilepro-glibc-2.26",
+      "triple": "tilepro-linux-gnu",
+      "gcc_version": "7.5.0",
+      "libc": {
+        "kind": "glibc",
+        "soname": "libc.so.6",
+        "version": "2.26"
+      },
+      "ldso": {
+        "soname": "ld.so.1"
+      },
+      "interp": "/lib/ld.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "little",
+        "machine": "Tilera TILEPro multicore architecture family"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": false,
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld.so.1",
+        "libBrokenLocale.so.1",
+        "libSegFault.so",
+        "libanl.so.1",
+        "libc.so.6",
+        "libcidn.so.1",
+        "libcrypt.so.1",
+        "libdl.so.2",
+        "libm.so.6",
+        "libmemusage.so",
+        "libnsl.so.1",
+        "libnss_db.so.2",
+        "libnss_dns.so.2",
+        "libnss_files.so.2",
+        "libnss_hesiod.so.2",
+        "libpcprofile.so",
+        "libpthread.so.0",
+        "libresolv.so.2",
+        "librt.so.1",
+        "libthread_db.so.1",
+        "libutil.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.16.18",
+        "min": "3.2.0"
+      },
+      "glibc": {
+        "requires": "2.17",
+        "provides": "2.26"
+      },
+      "arch": {
+        "family": "tilepro",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/tilepro-glibc-2.26/Dockerfile",
+        "dockerfile_sha256": "3202a5403d349ad49478241ad2966ba25a70f3baba55a3491a0d84c445665b4b",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:fd1d273b08d406f008a897e8c70caaf2def737b194ca03721b6eeb9eaa56ea9d",
+        "toolchain_sha256": "afe1745053bb2d5e2c6e395de77bced98ca6e63afcec5be175b9ec6a6d6f8b97",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "c8aef9d6c95a434a1ccb2d0b2943db5103a45ad474f70f3e4193c6e16927c41d"
       }
