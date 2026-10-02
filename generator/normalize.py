@@ -87,6 +87,11 @@ def _power(flags, attrs):
     return "power", abi, fl
 
 
+def _fixed_soft(family):
+    # Tile has no FPU: floating point is always done in software, with one ABI
+    return lambda flags, attrs: (family, {}, "soft")
+
+
 def _fixed_hard(family):
     # AArch64 and x86 have a single hard-float procedure call standard
     return lambda flags, attrs: (family, {}, "hard")
@@ -115,6 +120,8 @@ FAMILIES = [
     (r"^(arcv2|arcompact|arc)", "arc"),
     (r"^(analog devices blackfin|blackfin|bfin)", "blackfin"),
     (r"^(c-sky|csky)", "csky"),
+    (r"^(tilera tile-gx|tilegx)", "tilegx"),       # TILE-Gx and TILEPro are different ISAs
+    (r"^(tilera tilepro|tilepro)", "tilepro"),
 ]
 
 
@@ -136,6 +143,8 @@ DECODERS = {
     "aarch64": _fixed_hard("aarch64"),
     "x86_64": _fixed_hard("x86_64"),
     "x86": _fixed_hard("x86"),
+    "tilegx": _fixed_soft("tilegx"),
+    "tilepro": _fixed_soft("tilepro"),
 }
 
 

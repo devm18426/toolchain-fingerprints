@@ -49,7 +49,9 @@ class Flags(unittest.TestCase):
                           ("s390x", "s390"), ("sh4", "sh"), ("Sparc v9", "sparc"), ("sparc64", "sparc"),
                           ("Tensilica Xtensa Processor", "xtensa"), ("ARCv2", "arc"), ("aarch64", "aarch64"),
                           ("armv7l", "arm"), ("i686", "x86"), ("x86_64", "x86_64"), ("ppc64le", "power"),
-                          ("Analog Devices Blackfin", "blackfin"), ("C-SKY", "csky")]:
+                          ("Analog Devices Blackfin", "blackfin"), ("C-SKY", "csky"),
+                          ("Tilera TILE-Gx multicore architecture family", "tilegx"), ("tilegx", "tilegx"),
+                          ("Tilera TILEPro multicore architecture family", "tilepro"), ("tilepro", "tilepro")]:
             self.assertEqual(machine_family(name), fam, name)
 
 
@@ -212,6 +214,29 @@ class Lint(unittest.TestCase):
         self.assertEqual(self.lint_text(self.GOOD + extra), [])
         errs = self.lint_text(self.GOOD.replace(" /tc.tar", " /other.tar"))
         self.assertTrue(any("exactly one checksummed toolchain" in e for e in errs))
+
+    SOURCES = [("https://x/binutils-1.tar.xz", "1" * 64), ("https://x/gcc-1.tar.xz", "2" * 64)]
+
+    def test_source_build_template_lints_clean(self):
+        text = gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc", self.SOURCES)
+        self.assertEqual(self.lint_text(text), [])
+
+    def test_source_build_heredoc_is_one_instruction(self):
+        text = gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc", self.SOURCES)
+        runs = [args for _, kw, args in gen.instructions(text) if kw == "RUN"]
+        self.assertTrue(any("step gcc-final gcc3" in r for r in runs))
+        self.assertFalse(any(kw == "STEP" for _, kw, _ in gen.instructions(text)))
+
+    def test_source_build_may_not_fetch_outside_the_snapshot(self):
+        text = gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc", self.SOURCES)
+        errs = self.lint_text(text.replace("snapshot.debian.org/archive/debian/", "deb.debian.org/debian/", 1))
+        self.assertTrue(any("deb.debian.org" in e for e in errs))
+        errs = self.lint_text(text.replace("RUN <<'BUILD'", "RUN curl -O https://x/y\nRUN <<'BUILD'", 1))
+        self.assertTrue(any("curl" in e for e in errs))
+
+    def test_prebuilt_still_may_not_use_apt(self):
+        errs = self.lint_text(self.GOOD + "RUN apt-get install -y make\n")
+        self.assertTrue(any("apt-get" in e for e in errs))
 
     def test_unchecksummed_download_refused(self):
         errs = self.lint_text(self.GOOD.replace("--checksum=sha256:" + "b" * 64 + " ", ""))
