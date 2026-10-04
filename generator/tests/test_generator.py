@@ -1,5 +1,8 @@
 """Unit tests that need no Docker: python -m unittest discover generator/tests"""
+import io
 import sys
+import tarfile
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -200,14 +203,18 @@ class Lint(unittest.TestCase):
         self.assertIn("build context", text)
 
     def test_labels_must_match_the_toolchain(self):
-        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc", "xz")
         self.assertIn('io.tcfp.toolchain.url="https://x/tc.tar.xz"', text)
         errs = self.lint_text(text.replace('io.tcfp.toolchain.sha256="' + "d" * 64, 'io.tcfp.toolchain.sha256="' + "e" * 64))
         self.assertTrue(any("io.tcfp.toolchain.sha256" in e for e in errs))
 
     def test_scaffold_template_lints_clean(self):
-        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc")
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.xz", "d" * 64, "x-gcc", "xz")
         self.assertEqual(self.lint_text(text), [])
+
+    def test_decompression_flag_is_explicit(self):
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/tc.tar.bz2", "d" * 64, "x-gcc", "bz2")
+        self.assertIn("tar -xjf /tc.tar", text)
 
     def test_toolchain_is_the_tc_tar_download(self):
         extra = "ADD --checksum=sha256:" + "e" * 64 + " https://x/make.deb /debs/\n"
@@ -241,6 +248,18 @@ class Lint(unittest.TestCase):
     def test_unchecksummed_download_refused(self):
         errs = self.lint_text(self.GOOD.replace("--checksum=sha256:" + "b" * 64 + " ", ""))
         self.assertTrue(any("without --checksum" in e for e in errs))
+
+
+class Tarball(unittest.TestCase):
+    def test_compression_is_detected_from_the_content(self):
+        for comp in ("gz", "bz2", "xz"):
+            with tempfile.TemporaryDirectory() as d:
+                path = Path(d) / "tc.tar"                   # no extension to go by
+                with tarfile.open(path, f"w:{comp}") as t:
+                    info = tarfile.TarInfo("tc/bin/x-linux-gcc")
+                    t.addfile(info, io.BytesIO())
+                _, got, tops, gccs = gen.inspect_tarball(path.as_uri())
+                self.assertEqual((got, tops, gccs), (comp, {"tc"}, ["x-linux-gcc"]))
 
 
 if __name__ == "__main__":

@@ -61,6 +61,10 @@ RAW_DATA = ROOT / "data" / "raw"            # probe output per toolchain: record
 # indexes, so pin the platform or an arm64 host would pull the wrong base.
 PLATFORM = "linux/amd64"
 TOOLCHAIN_DEST = "/tc.tar"          # the ADD with this destination is the toolchain
+# busybox tar flag for each compression tarfile detects. The flag is always
+# written out: busybox's autodetect takes a compressed file whose bytes 257-261
+# happen to be NUL for an old-style plain tar header and fails its checksum.
+TAR_FLAGS = {"tar": "", "gz": "z", "bz2": "j", "xz": "J"}
 
 # Pinned inputs every toolchain Dockerfile gets (gen.py new writes them).
 ALPINE = "alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8"
@@ -387,7 +391,7 @@ def static_labels(tc_id, url, sha256):
     }
 
 
-def dockerfile_text(tc_id, comment, url, sha256, cc):
+def dockerfile_text(tc_id, comment, url, sha256, cc, comp):
     labels = " \\\n      ".join(f'{k}="{v}"' for k, v in static_labels(tc_id, url, sha256).items())
     tools = "".join(f"ADD --checksum=sha256:{h} \\\n    {u} /debs/\n" for u, h in BUILD_TOOLS)
     return f"""# {comment}
@@ -397,7 +401,7 @@ def dockerfile_text(tc_id, comment, url, sha256, cc):
 FROM {ALPINE} AS fetch
 ADD --checksum=sha256:{sha256} \\
     {url} {TOOLCHAIN_DEST}
-RUN mkdir /tc && tar -xf {TOOLCHAIN_DEST} -C /tc --strip-components=1
+RUN mkdir /tc && tar -x{TAR_FLAGS[comp]}f {TOOLCHAIN_DEST} -C /tc --strip-components=1
 
 FROM {DEBIAN}
 # build tools (make, patchelf, patch, xz, bzip2, pkg-config), pinned .debs
@@ -508,7 +512,7 @@ def cmd_new_from_source(a):
 
 
 def inspect_tarball(url):
-    """Stream url once: return (sha256, top-level dirs, gcc names in <top>/bin/).
+    """Stream url once: return (sha256, compression, top-level dirs, gcc names in <top>/bin/).
 
     Nothing is written to disk, so importing hundreds of toolchains needs no
     space. curl is preferred: it verifies TLS with the OS certificate store,
@@ -525,6 +529,7 @@ def inspect_tarball(url):
     tops, gccs = set(), set()
     try:
         with tarfile.open(fileobj=buf, mode="r|*") as t:
+            comp = t.fileobj.comptype
             for m in t:
                 parts = m.name.lstrip("./").split("/")
                 if parts[0]:
@@ -542,7 +547,7 @@ def inspect_tarball(url):
             if rc:
                 raise ValueError(f"download failed (curl exit {rc})")
     # prefer the full triple (most dashes), e.g. mips-buildroot-linux-uclibc-gcc over mips-linux-gcc
-    return src.h.hexdigest(), tops, sorted(gccs, key=lambda g: (-g.count("-"), g))
+    return src.h.hexdigest(), comp, tops, sorted(gccs, key=lambda g: (-g.count("-"), g))
 
 
 def scaffold(tc_id, url, cc=None, comment=None):
@@ -551,7 +556,9 @@ def scaffold(tc_id, url, cc=None, comment=None):
         raise ValueError(f"bad TC_ID {tc_id!r}: use letters, digits, '.', '_' and '-'")
     if (TOOLCHAINS / tc_id).exists():
         raise ValueError(f"toolchains/{tc_id} already exists")
-    sha, tops, gccs = inspect_tarball(url)
+    sha, comp, tops, gccs = inspect_tarball(url)
+    if comp not in TAR_FLAGS:
+        raise ValueError(f"{comp} compression: busybox tar in the image cannot extract it")
     if len(tops) != 1:
         raise ValueError(f"expected one top-level directory in the tarball (it is extracted with "
                          f"--strip-components=1), found {sorted(tops)[:5]}")
@@ -562,7 +569,7 @@ def scaffold(tc_id, url, cc=None, comment=None):
         raise ValueError("no <top>/bin/*-gcc in the tarball; pass --cc NAME")
     df = dockerfile(tc_id)
     df.parent.mkdir(parents=True)
-    df.write_text(dockerfile_text(tc_id, comment or url.rsplit("/", 1)[-1], url, sha, cc), newline="\n")
+    df.write_text(dockerfile_text(tc_id, comment or url.rsplit("/", 1)[-1], url, sha, cc, comp), newline="\n")
     errs, _ = lint(tc_id)
     if errs:
         shutil.rmtree(df.parent)
