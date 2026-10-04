@@ -1,4 +1,4 @@
-# IA-64 (Itanium), glibc 2.39, GCC 13.3.0, binutils 2.42, Linux 6.6 headers: the last releases with IA-64 support (Linux dropped it in 6.7, glibc in 2.40)
+# IA-64 (Itanium), glibc 2.38, GCC 13.3.0, binutils 2.42, Linux 6.6 headers: the last releases with IA-64 support (Linux dropped it in 6.7, glibc in 2.39)
 # Built from source: nobody distributes this toolchain any more. Every source
 # tarball is pinned by sha256, the build host is a pinned Debian image with apt
 # from a dated snapshot, and the build script is inlined below, so this file's
@@ -22,8 +22,8 @@ ADD --checksum=sha256:feced2d430dd5a97805fa289fed3fc8ff2b094c02d05287fd6133e7f1f
     https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-4.1.0.tar.bz2 /src/
 ADD --checksum=sha256:17503d2c395dfcf106b622dc142683c1199431d095367c6aacba6eec30340459 \
     https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.2.1.tar.gz /src/
-ADD --checksum=sha256:f77bd47cf8170c57365ae7bf86696c118adb3b120d3259c64c502d3dc1e2d926 \
-    https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz /src/
+ADD --checksum=sha256:fb82998998b2b29965467bc1b69d152e9c307d2cf301c9eafb4555b770ef3fd2 \
+    https://ftp.gnu.org/gnu/glibc/glibc-2.38.tar.xz /src/
 ENV TARGET=ia64-linux-gnu LINUX_ARCH=ia64 libc_cv_cxx_link_ok=no
 RUN <<'BUILD'
 #!/bin/bash
@@ -156,11 +156,11 @@ ADD --checksum=sha256:312b2bdeff4671f8e0d589c124554890e944dd083061e9ad6f129bc76a
     https://snapshot.debian.org/archive/debian/20260918T000000Z/pool/main/p/pkgconf/pkg-config_1.8.1-1_amd64.deb /debs/
 RUN dpkg -i /debs/*.deb && rm -rf /debs
 COPY --from=build /opt/tc /opt/tc
-ENV TC_ID=ia64-glibc-2.39 \
+ENV TC_ID=ia64-glibc-2.38 \
     CC=/opt/tc/bin/ia64-linux-gnu-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
-LABEL org.opencontainers.image.title="ia64-glibc-2.39" \
-      io.tcfp.tc_id="ia64-glibc-2.39" \
-      io.tcfp.toolchain.url="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.158.tar.xz https://ftp.gnu.org/gnu/binutils/binutils-2.42.tar.xz https://ftp.gnu.org/gnu/gcc/gcc-13.3.0/gcc-13.3.0.tar.xz https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.2.1.tar.bz2 https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.2.1.tar.gz https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-4.1.0.tar.bz2" \
-      io.tcfp.toolchain.sha256="88f03af1ac6cdfc76aee37f029f8ffb49d71f656fccbbb7d13b6552fa481b55a"
+LABEL org.opencontainers.image.title="ia64-glibc-2.38" \
+      io.tcfp.tc_id="ia64-glibc-2.38" \
+      io.tcfp.toolchain.url="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.158.tar.xz https://ftp.gnu.org/gnu/binutils/binutils-2.42.tar.xz https://ftp.gnu.org/gnu/gcc/gcc-13.3.0/gcc-13.3.0.tar.xz https://ftp.gnu.org/gnu/glibc/glibc-2.38.tar.xz https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.2.1.tar.bz2 https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.2.1.tar.gz https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-4.1.0.tar.bz2" \
+      io.tcfp.toolchain.sha256="ba2c6095c44f9daf86b2716094c520e1734549923fc931433d874ebf0a7ef949"

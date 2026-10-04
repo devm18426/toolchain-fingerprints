@@ -1,4 +1,4 @@
-# Alpha (64-bit), glibc 2.39, GCC 13.3.0, binutils 2.42, Linux 6.6 headers: same source set as the IA-64 toolchain; no prebuilt glibc toolchain is distributed for it
+# Alpha (64-bit), glibc 2.39, GCC 13.3.0, binutils 2.42, Linux 6.6 headers: no prebuilt glibc toolchain is distributed for it
 # Built from source: nobody distributes this toolchain any more. Every source
 # tarball is pinned by sha256, the build host is a pinned Debian image with apt
 # from a dated snapshot, and the build script is inlined below, so this file's
