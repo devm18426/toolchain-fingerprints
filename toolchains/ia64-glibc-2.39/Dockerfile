@@ -24,7 +24,7 @@ ADD --checksum=sha256:17503d2c395dfcf106b622dc142683c1199431d095367c6aacba6eec30
     https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.2.1.tar.gz /src/
 ADD --checksum=sha256:f77bd47cf8170c57365ae7bf86696c118adb3b120d3259c64c502d3dc1e2d926 \
     https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz /src/
-ENV TARGET=ia64-linux-gnu LINUX_ARCH=ia64
+ENV TARGET=ia64-linux-gnu LINUX_ARCH=ia64 libc_cv_cxx_link_ok=no
 RUN <<'BUILD'
 #!/bin/bash
 # build-cross.sh: bootstrap a GCC + glibc Linux cross toolchain from source.

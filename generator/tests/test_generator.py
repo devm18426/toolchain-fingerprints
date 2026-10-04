@@ -239,6 +239,16 @@ class Lint(unittest.TestCase):
         self.assertIn("python3 rsync", text("linux-6.6.158"))
         self.assertEqual(self.lint_text(text("linux-6.6.158")), [])
 
+    def test_source_build_glibc_2_29_skips_the_host_cxx(self):
+        def text(glibc):
+            return gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc",
+                                              self.SOURCES + [(f"https://x/{glibc}.tar.xz", "4" * 64)])
+        self.assertNotIn("libc_cv_cxx_link_ok", text("glibc-2.27"))
+        self.assertNotIn("libc_cv_cxx_link_ok", text("glibc-2.28"))
+        self.assertIn("LINUX_ARCH=x libc_cv_cxx_link_ok=no\n", text("glibc-2.29"))
+        self.assertIn("LINUX_ARCH=x libc_cv_cxx_link_ok=no\n", text("glibc-2.39"))
+        self.assertEqual(self.lint_text(text("glibc-2.39")), [])
+
     def test_source_build_may_not_fetch_outside_the_snapshot(self):
         text = gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc", self.SOURCES)
         errs = self.lint_text(text.replace("snapshot.debian.org/archive/debian/", "deb.debian.org/debian/", 1))

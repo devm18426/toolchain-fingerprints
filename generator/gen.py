@@ -445,6 +445,12 @@ def dockerfile_source_text(tc_id, comment, target, linux_arch, cc, sources):
     # and leaving it out keeps older toolchains' Dockerfiles (so their images) unchanged
     m = re.search(r"/linux-(\d+)\.(\d+)", " ".join(u for u, _ in sources))
     extra = " rsync" if m and (int(m[1]), int(m[2])) >= (5, 3) else ""
+    # glibc 2.29+ builds support/links-dso-program with $CXX when configure finds a C++
+    # compiler that links. There is no target g++ until the final GCC, so configure falls
+    # back to the host g++ (which fails on target flags); this cache answer makes glibc use
+    # the C variant. It only matters to glibc's configure, which reads it from the environment.
+    g = re.search(r"/glibc-(\d+)\.(\d+)", " ".join(u for u, _ in sources))
+    env = " libc_cv_cxx_link_ok=no" if g and (int(g[1]), int(g[2])) >= (2, 29) else ""
     return f"""# {comment}
 # Built from source: nobody distributes this toolchain any more. Every source
 # tarball is pinned by sha256, the build host is a pinned Debian image with apt
@@ -457,7 +463,7 @@ RUN {apt} \\
  && apt-get install -y --no-install-recommends build-essential bison flex gawk texinfo file m4 \\
       xz-utils bzip2 perl python3{extra} \\
  && rm -rf /var/lib/apt/lists/*
-{adds}ENV TARGET={target} LINUX_ARCH={linux_arch}
+{adds}ENV TARGET={target} LINUX_ARCH={linux_arch}{env}
 RUN <<'BUILD'
 {script}
 BUILD
