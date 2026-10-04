@@ -1,6 +1,6 @@
 {
   "schema_version": "2.5",
-  "generated_at": "2026-10-04T23:29:27Z",
+  "generated_at": "2026-10-04T23:33:17Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -2712,6 +2712,80 @@
         "dockerfile_sha256": "5b51d3eb3d47b0f45d00e6ab8d8a86f9bec232e686ea1fe53d1cc1131543d8f5",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:b84a479ec35022e95c5bc45e77707c8173452377cf214ad25a1878e525e762d6",
         "toolchain_sha256": "6919b4cf04b8c5628a2a93bcf4b05e1143ab15dfb4bc2acde02a2e3c075bf041",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "aarch64-musl-stable-2022.08-2",
+      "triple": "aarch64-buildroot-linux-musl",
+      "gcc_version": "11.3.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-aarch64.so.1",
+        "version": "1.2.3"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-aarch64.so.1",
+      "elf": {
+        "class": "64",
+        "endian": "little",
+        "machine": "AArch64"
+      },
+      "isa": "",
+      "float_abi": "hard",
+      "pie_default": true,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
+      "sysroot_sonames": [
+        "libatomic.so.1",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libgomp.so.1",
+        "libstdc++.so.6"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.19.257",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "aarch64",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/aarch64-musl-stable-2022.08-2/Dockerfile",
+        "dockerfile_sha256": "afb1dde607188faba611bf9604859269d80aecc606cbf66825a47885455f0e72",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:d2eec41aa7a93d6fe14afc1924d607eb223881abb2700a1f1a8d76c6e60bf0c0",
+        "toolchain_sha256": "06f5e1d63be86dfbe3c8f7508164464116d43a044b9bef20fe97277f34400bc2",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
@@ -102337,6 +102411,83 @@
         "dockerfile_sha256": "ed9cd049d4630c2124411925a83b5103b28a398803c8e334a0e424e6f84e764e",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:aea837f199dbd765ebf7ed509113c25c9a76974155a178d8a36c3b0b7f640962",
         "toolchain_sha256": "210defc0781683a240bac25295ff612d6b6c875c7d938d11512f8ec9472245bc",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "sparcv8-uclibc-bleeding-edge-2022.08-2",
+      "triple": "sparc-buildroot-linux-uclibc",
+      "gcc_version": "11.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.42"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "Sparc"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libgomp.so.1",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "5.4.212",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "sparc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/sparcv8-uclibc-bleeding-edge-2022.08-2/Dockerfile",
+        "dockerfile_sha256": "a896d499cf90177719c89ab25a2b03e1ff40c797db1ea5c681f0561c676ae886",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:bef59414b8b2ec5c743bd7a6fb7f7840375bb0c0d19453b760b60013d0257d7b",
+        "toolchain_sha256": "ccd4110fa574d2323f038394c0603245384002fbe906204db36fe200c9c8f886",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
