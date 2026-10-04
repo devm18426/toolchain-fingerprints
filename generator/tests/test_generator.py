@@ -113,6 +113,13 @@ class Normalize(unittest.TestCase):
         self.assertEqual((r["hash_style"], r["march"], r["float_abi"], r["pie_default"]), ("sysv", "mips32", "hard", True))
         self.assertNotIn("glibc", r)
 
+    def test_nothing_compiled_is_marked_compile_failed(self):
+        self.assertEqual(normalize(self.RAW, "t")["probe"], {"status": "ok", "error": ""})
+        raw = dict(self.RAW, **{k + ".rc": "1" for k in ("link_dyn", "link_static", "time_t.4", "time_t.8")},
+                   **{"link_dyn.err": "\ngcc: error trying to exec 'cc1': execvp: No such file or directory\n"})
+        self.assertEqual(normalize(raw, "t")["probe"],
+                         {"status": "compile_failed", "error": "gcc: error trying to exec 'cc1': execvp: No such file or directory"})
+
 
 class March(unittest.TestCase):
     def test_empty_default_march_does_not_swallow_the_next_option(self):

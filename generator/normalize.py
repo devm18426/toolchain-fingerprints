@@ -236,6 +236,11 @@ def normalize(raw, tc_id):
 
     family, arch_abi, float_abi = _decode_arch(machine, flags, attrs)
 
+    # Nothing compiled: every field derived from compiler output below is a default, not a fact.
+    compiled = any(ok(k) for k in ("link_dyn", "link_static", "time_t.4", "time_t.8"))
+    err = next((ln.strip() for k in ("link_dyn", "time_t.8", "gcc_target")
+                for ln in g(k + ".err").splitlines() if ln.strip()), "")
+
     rec = {
         "tc_id": tc_id,
         "triple": g("triple"),
@@ -264,6 +269,7 @@ def normalize(raw, tc_id):
             "time64_syscalls": _time64(kind, cls == "ELF64", time_bits, libc_ver, ucfg, kmin),
         },
         "kernel": {"headers": kh, "min": kmin},
+        "probe": {"status": "ok" if compiled else "compile_failed", "error": "" if compiled else err[:300]},
     }
     if kind == "glibc":
         req = {v for n in c_corpus for v in re.findall(r"GLIBC_(\d[\d.]*)", g(f"corpus.{n}.V"))}
