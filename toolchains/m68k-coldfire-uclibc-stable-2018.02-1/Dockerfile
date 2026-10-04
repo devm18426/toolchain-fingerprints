@@ -29,6 +29,8 @@ ADD --checksum=sha256:312b2bdeff4671f8e0d589c124554890e944dd083061e9ad6f129bc76a
     https://snapshot.debian.org/archive/debian/20260918T000000Z/pool/main/p/pkgconf/pkg-config_1.8.1-1_amd64.deb /debs/
 RUN dpkg -i /debs/*.deb && rm -rf /debs
 COPY --from=fetch /tc /opt/tc
+# host binaries may carry an absolute RPATH into the prefix they were built in
+RUN ln -s /opt/tc /opt/m68k-coldfire--uclibc--stable-2018.02-1
 ENV TC_ID=m68k-coldfire-uclibc-stable-2018.02-1 \
     CC=/opt/tc/bin/m68k-buildroot-uclinux-uclibc-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

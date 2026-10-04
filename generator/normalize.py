@@ -177,6 +177,29 @@ def _time64(kind, elf64, time_bits, libc_ver, uclibc_cfg, kmin):
     return "unknown"
 
 
+# uClinux flat format (no-MMU targets): include/uapi/linux/flat.h / elf2flt
+BFLT_FLAGS = [(0x01, "ram"), (0x02, "gotpic"), (0x04, "gzip"), (0x08, "gzdata"), (0x10, "ktrace"), (0x20, "l1stk")]
+
+
+def _binary(magic_hex, linked, readelf_ok, flat_libc):
+    """Output format of the baseline program. magic_hex: its first bytes as hex text
+    (probes that capture them). Without it the format is inferred: readelf read it
+    (elf), or readelf could not and the libc is built for flat binaries (bflt, no header)."""
+    b = bytes.fromhex("".join(magic_hex.split())) if re.fullmatch(r"[0-9a-fA-F\s]*", magic_hex) else b""
+    if b[:4] == b"\x7fELF":
+        return {"format": "elf"}
+    if b[:4] == b"bFLT" and len(b) >= 40:
+        flags = int.from_bytes(b[36:40], "big")
+        return {"format": "bflt", "bflt": {"version": int.from_bytes(b[4:8], "big"),
+                                           "flags": [n for bit, n in BFLT_FLAGS if flags & bit]}}
+    if not b and linked:
+        if readelf_ok and not flat_libc:
+            return {"format": "elf"}
+        if flat_libc:
+            return {"format": "bflt"}
+    return {"format": "unknown"}
+
+
 def normalize(raw, tc_id):
     """raw: dict of probe file name -> text. Returns a schema record (no provenance)."""
     g = lambda k: (raw.get(k) or "").strip()
@@ -197,6 +220,8 @@ def normalize(raw, tc_id):
     # glibc loaders: ld-linux*.so.N (most arches), ld.so.1 (MIPS, PowerPC32), ld64.so.N (PowerPC64, s390x)
     kind = ("musl" if "musl" in both else "uclibc" if "uClibc" in both
             else "glibc" if re.search(r"\bld(64)?(-linux[\w.-]*)?\.so\b", both) else "unknown")
+    if kind == "unknown" and re.search(r"define\s+__UCLIBC_MAJOR__", g("uclibc_config")):
+        kind = "uclibc"                              # static-only (no-MMU) uClibc: no loader to name it
     if kind == "musl" and not libc_soname and interp:
         libc_soname = interp.rsplit("/", 1)[-1]      # musl's loader IS libc
 
@@ -238,6 +263,7 @@ def normalize(raw, tc_id):
 
     # Nothing compiled: every field derived from compiler output below is a default, not a fact.
     compiled = any(ok(k) for k in ("link_dyn", "link_static", "time_t.4", "time_t.8"))
+    flat = bool(re.search(r"define\s+__UCLIBC_FORMAT_(SHARED_)?FLAT__", ucfg))     # uClibc built for bFLT
     err = next((ln.strip() for k in ("link_dyn", "time_t.8", "gcc_target")
                 for ln in g(k + ".err").splitlines() if ln.strip()), "")
 
@@ -270,6 +296,8 @@ def normalize(raw, tc_id):
         },
         "kernel": {"headers": kh, "min": kmin},
         "probe": {"status": "ok" if compiled else "compile_failed", "error": "" if compiled else err[:300]},
+        "binary": (_binary(g("dyn.magic"), True, ok("dyn.h"), flat) if ok("link_dyn")
+                   else _binary(g("sta.magic"), ok("link_static"), False, flat)),
     }
     if kind == "glibc":
         req = {v for n in c_corpus for v in re.findall(r"GLIBC_(\d[\d.]*)", g(f"corpus.{n}.V"))}
