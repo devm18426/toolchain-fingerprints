@@ -1,4 +1,4 @@
-# TILE-Gx (64-bit), glibc 2.27, GCC 7.5.0, binutils 2.30, Linux 4.16 headers: the last releases with Tile support
+# Alpha (64-bit), glibc 2.39, GCC 13.3.0, binutils 2.42, Linux 6.6 headers: no prebuilt glibc toolchain is distributed for it
 # Built from source: nobody distributes this toolchain any more. Every source
 # tarball is pinned by sha256, the build host is a pinned Debian image with apt
 # from a dated snapshot, and the build script is inlined below, so this file's
@@ -8,23 +8,23 @@ FROM debian:buster-slim@sha256:bb3dc79fddbca7e8903248ab916bb775c96ec61014b3d02b4
 RUN printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20240701T000000Z buster main\ndeb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20240701T000000Z buster-updates main\ndeb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20240701T000000Z buster/updates main\n' > /etc/apt/sources.list \
  && apt-get -o Acquire::Check-Valid-Until=false update \
  && apt-get install -y --no-install-recommends build-essential bison flex gawk texinfo file m4 \
-      xz-utils bzip2 perl python3 \
+      xz-utils bzip2 perl python3 rsync \
  && rm -rf /var/lib/apt/lists/*
-ADD --checksum=sha256:6e46b8aeae2f727a36f0bd9505e405768a72218f1796f0d09757d45209871ae6 \
-    https://ftp.gnu.org/gnu/binutils/binutils-2.30.tar.xz /src/
-ADD --checksum=sha256:b81946e7f01f90528a1f7352ab08cc602b9ccc05d4e44da4bd501c5a189ee661 \
-    https://ftp.gnu.org/gnu/gcc/gcc-7.5.0/gcc-7.5.0.tar.xz /src/
-ADD --checksum=sha256:41026d713ba4f7a5e9d514b876ce4ed28a1d993c0c58b42b2a2597d6a0e83021 \
-    https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.16.18.tar.xz /src/
-ADD --checksum=sha256:498449a994efeba527885c10405993427995d3f86b8768d8cdf8d9dd7c6b73e8 \
-    https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.1.0.tar.bz2 /src/
-ADD --checksum=sha256:d3103a80cdad2407ed581f3618c4bed04e0c92d1cf771a65ead662cc397f7775 \
-    https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-3.1.4.tar.bz2 /src/
-ADD --checksum=sha256:617decc6ea09889fb08ede330917a00b16809b8db88c29c31bfbb49cbf88ecc3 \
-    https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.0.3.tar.gz /src/
-ADD --checksum=sha256:5172de54318ec0b7f2735e5a91d908afe1c9ca291fec16b5374d9faadfc1fc72 \
-    https://ftp.gnu.org/gnu/glibc/glibc-2.27.tar.xz /src/
-ENV TARGET=tilegx-linux-gnu LINUX_ARCH=tile
+ADD --checksum=sha256:f6e4d41fd5fc778b06b7891457b3620da5ecea1006c6a4a41ae998109f85a800 \
+    https://ftp.gnu.org/gnu/binutils/binutils-2.42.tar.xz /src/
+ADD --checksum=sha256:0845e9621c9543a13f484e94584a49ffc0129970e9914624235fc1d061a0c083 \
+    https://ftp.gnu.org/gnu/gcc/gcc-13.3.0/gcc-13.3.0.tar.xz /src/
+ADD --checksum=sha256:9eb33173b0e04e898d431587c78c47ee6e19e3fdf2ea007323de82af14bb2a4f \
+    https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.158.tar.xz /src/
+ADD --checksum=sha256:eae9326beb4158c386e39a356818031bd28f3124cf915f8c5b1dc4c7a36b4d7c \
+    https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.2.1.tar.bz2 /src/
+ADD --checksum=sha256:feced2d430dd5a97805fa289fed3fc8ff2b094c02d05287fd6133e7f1f0ec926 \
+    https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-4.1.0.tar.bz2 /src/
+ADD --checksum=sha256:17503d2c395dfcf106b622dc142683c1199431d095367c6aacba6eec30340459 \
+    https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.2.1.tar.gz /src/
+ADD --checksum=sha256:f77bd47cf8170c57365ae7bf86696c118adb3b120d3259c64c502d3dc1e2d926 \
+    https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz /src/
+ENV TARGET=alpha-linux-gnu LINUX_ARCH=alpha libc_cv_cxx_link_ok=no
 RUN <<'BUILD'
 #!/bin/bash
 # build-cross.sh: bootstrap a GCC + glibc Linux cross toolchain from source.
@@ -159,11 +159,11 @@ ADD --checksum=sha256:312b2bdeff4671f8e0d589c124554890e944dd083061e9ad6f129bc76a
     https://snapshot.debian.org/archive/debian/20260918T000000Z/pool/main/p/pkgconf/pkg-config_1.8.1-1_amd64.deb /debs/
 RUN dpkg -i /debs/*.deb && rm -rf /debs
 COPY --from=build /opt/tc /opt/tc
-ENV TC_ID=tilegx-glibc-2.27 \
-    CC=/opt/tc/bin/tilegx-linux-gnu-gcc \
+ENV TC_ID=alpha-glibc-2.39 \
+    CC=/opt/tc/bin/alpha-linux-gnu-gcc \
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /work
-LABEL org.opencontainers.image.title="tilegx-glibc-2.27" \
-      io.tcfp.tc_id="tilegx-glibc-2.27" \
-      io.tcfp.toolchain.url="https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.16.18.tar.xz https://ftp.gnu.org/gnu/binutils/binutils-2.30.tar.xz https://ftp.gnu.org/gnu/gcc/gcc-7.5.0/gcc-7.5.0.tar.xz https://ftp.gnu.org/gnu/glibc/glibc-2.27.tar.xz https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.1.0.tar.bz2 https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.0.3.tar.gz https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-3.1.4.tar.bz2" \
-      io.tcfp.toolchain.sha256="62ad9fa8a78f4190a6de54de9c1cf5c821349d8ec022ce7c1e3e2bb867358fe3"
+LABEL org.opencontainers.image.title="alpha-glibc-2.39" \
+      io.tcfp.tc_id="alpha-glibc-2.39" \
+      io.tcfp.toolchain.url="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.158.tar.xz https://ftp.gnu.org/gnu/binutils/binutils-2.42.tar.xz https://ftp.gnu.org/gnu/gcc/gcc-13.3.0/gcc-13.3.0.tar.xz https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.2.1.tar.bz2 https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.2.1.tar.gz https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-4.1.0.tar.bz2" \
+      io.tcfp.toolchain.sha256="88f03af1ac6cdfc76aee37f029f8ffb49d71f656fccbbb7d13b6552fa481b55a"

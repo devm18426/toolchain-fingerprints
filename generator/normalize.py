@@ -93,7 +93,7 @@ def _fixed_soft(family):
 
 
 def _fixed_hard(family):
-    # AArch64 and x86 have a single hard-float procedure call standard
+    # AArch64, x86, IA-64, Alpha and PA-RISC Linux have a single hard-float procedure call standard
     return lambda flags, attrs: (family, {}, "hard")
 
 
@@ -122,6 +122,9 @@ FAMILIES = [
     (r"^(c-sky|csky)", "csky"),
     (r"^(tilera tile-gx|tilegx)", "tilegx"),       # TILE-Gx and TILEPro are different ISAs
     (r"^(tilera tilepro|tilepro)", "tilepro"),
+    (r"^(intel ia-64|ia64)", "ia64"),
+    (r"^alpha", "alpha"),
+    (r"^(hppa|parisc)", "parisc"),                  # readelf says HPPA, uname -m says parisc/parisc64
 ]
 
 
@@ -145,6 +148,9 @@ DECODERS = {
     "x86": _fixed_hard("x86"),
     "tilegx": _fixed_soft("tilegx"),
     "tilepro": _fixed_soft("tilepro"),
+    "ia64": _fixed_hard("ia64"),
+    "alpha": _fixed_hard("alpha"),
+    "parisc": _fixed_hard("parisc"),
 }
 
 
