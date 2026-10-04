@@ -1,6 +1,6 @@
 {
   "schema_version": "2.5",
-  "generated_at": "2026-10-04T14:34:20Z",
+  "generated_at": "2026-10-04T14:36:56Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -63847,19 +63847,26 @@
       "ldso": {
         "soname": "ld-linux-x86-64.so.2"
       },
-      "interp": "",
+      "interp": "/lib64/ld-linux-x86-64.so.2",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux-x86-64.so.2",
         "libBrokenLocale.so.1",
@@ -63887,43 +63894,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "both",
       "time": {
-        "time_t_bits": 32,
+        "time_t_bits": 64,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
-        "min": ""
+        "min": "4.19.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.29",
         "provides": "2.30"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-glibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "6f3149a5c6e167ecbbe6db6ea49b0fbec410ef67f16d5e14c2526962e8561f43",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:d5b54ac1595983e3d79ef887a33c0e5b47071ccf83fda02bff65046e827eb526",
+        "dockerfile_sha256": "128de4bd127b6c6c74e33d8503332d9777396eab407b23c1bf7c97db28434b12",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f6d17ba6f373bcb0e7ee4d7d96c6f8451bd5c8759d269bc1b44418898c9bea6c",
         "toolchain_sha256": "477a682b894f5766950148e1548a35960974aebb57f5a8f83b88c2b123590032",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -64045,19 +64055,26 @@
       "ldso": {
         "soname": "ld-linux-x86-64.so.2"
       },
-      "interp": "",
+      "interp": "/lib64/ld-linux-x86-64.so.2",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux-x86-64.so.2",
         "libBrokenLocale.so.1",
@@ -64085,43 +64102,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "sysv",
       "time": {
-        "time_t_bits": 32,
+        "time_t_bits": 64,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
-        "min": ""
+        "min": "4.1.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.17",
         "provides": "2.26"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-glibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "ac5a68b5448c09854af309d1548b2f3a1652eb68783c4078a746affca376dec1",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:1c0b824cfb609415b4810c901ba2dd1833d10f399c2209d241d1cf7952f77348",
+        "dockerfile_sha256": "d5e1b268c629710ea5cdcc821cff4eccb2d69a5dd09e6f29da4ae501bfe95e6d",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:8376b5b066fa81f89b0dc643ec9ebbf73c8a158503deca143bc5c0448ff60124",
         "toolchain_sha256": "51842da3a3ccf1f489a908e7a092530a397d69065d32e4f71dc3f91d1bd7f289",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -64136,19 +64156,26 @@
       "ldso": {
         "soname": "ld-linux-x86-64.so.2"
       },
-      "interp": "",
+      "interp": "/lib64/ld-linux-x86-64.so.2",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux-x86-64.so.2",
         "libBrokenLocale.so.1",
@@ -64176,43 +64203,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "both",
       "time": {
-        "time_t_bits": 32,
+        "time_t_bits": 64,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
-        "min": ""
+        "min": "4.4.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.29",
         "provides": "2.30"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-glibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "387a757ea1ff5a1d83bf3020be7bb54f59f2361a57b1d13a28cc35f0defc7345",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:7cfb130d799550b7644b14735b94c5c7a9c33d91d328bc7c9fdd164a014476de",
+        "dockerfile_sha256": "3d7a6b1ecdc3c91dc0cc3aed5fcbf6815a96c0fb2db31a810fa4b389ef010b84",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:71b2fb499d2f3e6ad14fc57d2c6f6f3ee7e1df96b159713f8c478aff52c1d3a6",
         "toolchain_sha256": "c49f8cd8bebf2563d293d15ed719778bbefaad78e504cf9b9f6b77834c6b7137",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -64685,64 +64715,71 @@
       "triple": "x86_64-buildroot-linux-musl",
       "gcc_version": "9.3.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-x86_64.so.1",
+        "version": "1.1.24"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-x86_64.so.1",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "both",
       "time": {
-        "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-musl-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "fa0a37d6762662a38c652edd601f8d305295dc0ce43ccc6800adc2603264951d",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:dbd70bb154cf82e7847a5c20192678ebdd920dc8d2b49d8f5f9f68a1d028cb9f",
+        "dockerfile_sha256": "23e5d5a0d32c2cb44f9eb111e9cfe384ab28f6306a7852118d693d3e103dc7ec",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f4cd65b96c016976c5facee938594308f99f305605e34f8a7f9c8aeb4508a657",
         "toolchain_sha256": "3d5344c1e2d1327f300b512147f0bfc72a2a2aac94ed66be3417baa0ca7bea36",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -64831,64 +64868,71 @@
       "triple": "x86_64-buildroot-linux-musl",
       "gcc_version": "6.4.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-x86_64.so.1",
+        "version": "1.1.18"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-x86_64.so.1",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "sysv",
       "time": {
-        "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-musl-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "f464880836b87c68b79f6275f154efbbae8f219f8b568e169515b65ba5d13c21",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:5bf8c37e112fc976875c5af436caad483b17fa29070b35a792f51cc338af86d7",
+        "dockerfile_sha256": "f582c710430ea01a6dc2ccf24032e199831bd1b5cf2e3c7f36522201e8a00229",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:d0ea990b3889ba591039c619e52f96e08158282d6cff2ea6a63e6bb25110705c",
         "toolchain_sha256": "2a329fe8305c5cf640dabfe5b3f087b120a9b9c6051ad54a347c999b8bf88f8b",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -64896,64 +64940,71 @@
       "triple": "x86_64-buildroot-linux-musl",
       "gcc_version": "8.4.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-x86_64.so.1",
+        "version": "1.1.24"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-x86_64.so.1",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "both",
       "time": {
-        "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-musl-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "0f4c82c8196c523f023fe82d78b8ffafde05eeb41c40b2925de8ebf9590f262b",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:b856ef3f0d91dc2bf34c72a8e35911a2e6405a24ee5aa8830d9f92aa78500eed",
+        "dockerfile_sha256": "8d81798424b4ea0bddf9551d385113f2b28fbc675863218656e6dd2bf7d50a00",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:8b192eb981bca1d43642556da69531d995f10f614ef7552e7fe30ca1b083ff68",
         "toolchain_sha256": "339e1683804fa626f429342fb3fadc1ce874c9c78fcc06e748c3dad0dd382ac4",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -65415,26 +65466,30 @@
       "triple": "x86_64-buildroot-linux-uclibc",
       "gcc_version": "9.3.0",
       "libc": {
-        "kind": "unknown",
+        "kind": "uclibc",
         "soname": "libc.so.0",
-        "version": ""
+        "version": "1.0.32"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld64-uClibc.so.0",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld64-uClibc.so.1",
         "libatomic.so.1",
@@ -65443,39 +65498,42 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "both",
       "time": {
-        "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-uclibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "71f4ca45877b260b32466e68c63d464d1f1588fea1c7587ca6523e9f190510a4",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:e79ab8678600c2498dfc1ff14a55864ef58e48af6944191c17f853137a437fce",
+        "dockerfile_sha256": "90e52758aaf8745b12823f7cc42d5271db08a5a6938c4087340a6e18f04bfe3c",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:317b2e06a0ed4e586d09e0746e9742356c6b2afab3721c87e530d98eb419ea86",
         "toolchain_sha256": "a992295b98c83f4c760966ac07bbe3bbbfa171be55ee1740bfd9b4449a844546",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -65567,26 +65625,30 @@
       "triple": "x86_64-buildroot-linux-uclibc",
       "gcc_version": "6.4.0",
       "libc": {
-        "kind": "unknown",
+        "kind": "uclibc",
         "soname": "libc.so.0",
-        "version": ""
+        "version": "1.0.28"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld64-uClibc.so.0",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld64-uClibc.so.1",
         "libatomic.so.1",
@@ -65595,39 +65657,42 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "sysv",
       "time": {
-        "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-uclibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "3d3196a61040e904f8a8eb3b6b74d2dd79f1a3ea6fa69bbbd36e970b7c547956",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:ab6598b0f5579257dd486fe017f2f406f79d4454a450e0aebbcbb6b79b277f54",
+        "dockerfile_sha256": "9494bc05ecdf89bc1daa04171b66df7328abf9cbb4d7c42a78e75d295b20eaa5",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:d4989b58967591446493c3a28db16571c6f7de33e9cfba72cca64d77bcb1202e",
         "toolchain_sha256": "d6805be2e3a29c6c7872839615e6b24937ca74c5174480325edeedb629a58a71",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -65635,26 +65700,30 @@
       "triple": "x86_64-buildroot-linux-uclibc",
       "gcc_version": "8.4.0",
       "libc": {
-        "kind": "unknown",
+        "kind": "uclibc",
         "soname": "libc.so.0",
-        "version": ""
+        "version": "1.0.32"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld64-uClibc.so.0",
       "elf": {
-        "class": "32",
-        "endian": "big",
-        "machine": ""
+        "class": "64",
+        "endian": "little",
+        "machine": "Advanced Micro Devices X86-64"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld64-uClibc.so.1",
         "libatomic.so.1",
@@ -65663,39 +65732,42 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "corei7",
+      "hash_style": "both",
       "time": {
-        "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time_t_bits": 64,
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86_64",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF64",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-64-core-i7-uclibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "6ef10e836c73dfcff0c86d87b7428061af877e75c3f05756e92d04deaf62068c",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:5f1c58e51e9a1a69a04a2bf142f47d5c73e427c0ae106477fbce7019270a03fc",
+        "dockerfile_sha256": "e85da40d658e7b830f74fe23e148ddc4177b7f3305c4c6327ac7c5394e4f58ac",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:cfc61d6da67fc90eaa49acc59461224677c8ed86be6021f2ad0c472b0ae570b4",
         "toolchain_sha256": "2bb57793ce19ecdcea4ebd134c95abd32d2c2da1a11188bda2ad5ceb3b4b6f1b",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -68448,19 +68520,26 @@
       "ldso": {
         "soname": "ld-linux.so.2"
       },
-      "interp": "",
+      "interp": "/lib/ld-linux.so.2",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux.so.2",
         "libBrokenLocale.so.1",
@@ -68487,43 +68566,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
-        "min": ""
+        "min": "4.19.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.29",
         "provides": "2.30"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-glibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "623c6eab19cef347a828291f565dd7124a5c0df0777f18fbcfc5d776ef795947",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:cb8e6ae73d0e3b6ce3eb1ce8d37b9de695b1f04d1523e90c782b2d91da8d716a",
+        "dockerfile_sha256": "b0e97a0df4d7762fee65891c08f36bfdce94911927b9346ae5062219c5fb763e",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:3c135e247c223158479485e6c09b87f5e59bbe640248b28ac475a287c5f3062a",
         "toolchain_sha256": "7791eff56fb14184230b1556ab74b5e602cce46b8317eb214f3d9715b01e00b3",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -68644,19 +68726,26 @@
       "ldso": {
         "soname": "ld-linux.so.2"
       },
-      "interp": "",
+      "interp": "/lib/ld-linux.so.2",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux.so.2",
         "libBrokenLocale.so.1",
@@ -68683,43 +68772,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
-        "min": ""
+        "min": "4.1.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.17",
         "provides": "2.26"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-glibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "bd87cf9313462af51d487523f049bea308cd40c5902132e6a69df06a39131b95",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:966efad89bf7096885cb758c463fc92b2cd18f108c1a41171c0097a148024ec2",
+        "dockerfile_sha256": "517015ce44a404c007bfd2652e79630ab975aeaabd09e316094fce6e868ee437",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:dbcd69cb47016fb5fd5044cde0570d5087408dec18e022bc487a2516b173dd35",
         "toolchain_sha256": "eb0f1f617d951c7a78d835c8ed78e56a901834d720c772b7065eade3641d49f9",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -68734,19 +68826,26 @@
       "ldso": {
         "soname": "ld-linux.so.2"
       },
-      "interp": "",
+      "interp": "/lib/ld-linux.so.2",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux.so.2",
         "libBrokenLocale.so.1",
@@ -68773,43 +68872,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
-        "min": ""
+        "min": "4.4.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.29",
         "provides": "2.30"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-glibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "24165cf2cf57f419eac20ed105c2a5751bdab37535923307d07eeec051e921bd",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:98eadfd117172aec0623164923b03f25ad52126fa988b7c87c6d2f1c9c644233",
+        "dockerfile_sha256": "00b80e50a9367d81386148f32524abd0305b10a14a4f234abdb7751dad146d05",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f61c3647ecf91b5bdfec90228c78bb512d182d8bc3d5c1db7c2fd5d45c5213d2",
         "toolchain_sha256": "61ffb8ee76211528dab9ba1d21044211a7d60a4192617a91245c1519a5b87137",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -69281,64 +69383,71 @@
       "triple": "i686-buildroot-linux-musl",
       "gcc_version": "9.3.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-i386.so.1",
+        "version": "1.1.24"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-i386.so.1",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-musl-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "b588b5d4c4a2b1388320f7998e500d2c7027a8d6de42cbdc7952adaf3ebbc2eb",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:1d978c8d55eb84add7766344ed37af140bebd6117e978960e65aac915ef8637d",
+        "dockerfile_sha256": "4b1b3a044681e7ca80445d6012f1e865ae431f6f4e00514440fe5645da868ed4",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:6f6c4d59f0ebfc0148ae1ae7136d9e697023d71f62bdae0d71a3b51532ac5055",
         "toolchain_sha256": "324c3ac23bfab5b87727dba179ea590af6895031d83fffdbb884c844d778dad0",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -69427,64 +69536,71 @@
       "triple": "i686-buildroot-linux-musl",
       "gcc_version": "6.4.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-i386.so.1",
+        "version": "1.1.18"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-i386.so.1",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-musl-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "eb924177295159770b47d4959716ae530435c3b95e5e9b79577ddb9e4967f85e",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:95b4ddd6d5f5adfbd285aacd3209f85ab5e1d830ba53b4f67e22825e6be735ea",
+        "dockerfile_sha256": "e4cb57f0f9426f7d0a45bbd4512bc227eb9a43b47cf839509a8d914bdcb6d2a2",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:a78f69b5dd9dd575d5305b3868f6a4fdc0c26f62f55b4e40279bdaf5ef831bc5",
         "toolchain_sha256": "c4e582b8777aa16ee10a85b8debd9a7a0e2dc2b230d5c4fe65823ccdf4d4e865",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -69492,64 +69608,71 @@
       "triple": "i686-buildroot-linux-musl",
       "gcc_version": "8.4.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-i386.so.1",
+        "version": "1.1.24"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-i386.so.1",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-musl-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "e8f5b22b5b336cbbc2f41c1fe225240cb297e9e56a15ab8f41a2ba22ed9fbbf9",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:89584781dd598907fddede48e63dd7ac9badff6b02ad5f78b0a1a71ef0629642",
+        "dockerfile_sha256": "f8d26225a047ca1bae9aa6a6d6e8ed213bc1377c2250ec34372f12d021aab186",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:21646a4cc70a1c7a515135fd57e52b655856123e634b90c60631820eb600203e",
         "toolchain_sha256": "20fed092d8f4150235f3d7ad62b3f7039b513afa55873d16ce72a4031bdc487e",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -70018,19 +70141,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -70039,9 +70166,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -70051,27 +70178,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-uclibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "987e2994621a57ed6346535793c37cca9b6ce72c5ccdf55230bf91958097fec9",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:103d628775a2e4649899cb0f83d81bd9be3edcf3190c0d3f6bfd60dcf8027b25",
+        "dockerfile_sha256": "28158a91ecbb09626ef8dbad5206e9d6708fa266a4d8a27eab5712ff3db464a9",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:bf37407fef0be374ccc86cbab5d731484a8c228fca111770abf289036c883a07",
         "toolchain_sha256": "9660525055493ff8285aecab3846836cdc935f0c9173bdeefc84a80590fc36ab",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -70170,19 +70300,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -70191,9 +70325,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -70203,27 +70337,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-uclibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "aa3b9fbbcfaeaaefd0f7bbecab48b6d5a8547641e93614614a21fed940fed9e8",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:8cc2086d4c3621867befc1d49c1c9fba481080542f7a63b671afa95dd62ef75e",
+        "dockerfile_sha256": "af7f530fc3a1e289b7734a672fd0bde14423641e209d908ded9815a6ffcc9d75",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f7858fab31eecd9c7d4544f165fece2715eb55f557a7c6c1fa7a54180c4b36ab",
         "toolchain_sha256": "383b65c37e724c226a2a20196cbe076ab04d3b7146cdc1989c209803a333c475",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -70238,19 +70375,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -70259,9 +70400,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "core2",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -70271,27 +70412,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-core2-uclibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "0164a02b4bb24a9f06ac2d603cbc87f6617ca93c4caf088e4afbbb58245f56fb",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:9e5f0c2a3dc4a18647fb3b42781ecda2ca507efd5e80ec176b206adec4715545",
+        "dockerfile_sha256": "713f11ffece5c8f66e576350d10f27068b620076963013464d6e81b56abba32b",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:a7dfda06e60d700e54315910c20c57c8b13fa9c2b1a60a7719801a1aeb0dec49",
         "toolchain_sha256": "a1c24a6893316f61451b2d00adf51cf317db93b64585b1b49391a080166e6046",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -70892,19 +71036,26 @@
       "ldso": {
         "soname": "ld-linux.so.2"
       },
-      "interp": "",
+      "interp": "/lib/ld-linux.so.2",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux.so.2",
         "libBrokenLocale.so.1",
@@ -70931,43 +71082,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
-        "min": ""
+        "min": "4.19.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.29",
         "provides": "2.30"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-glibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "88210ed28f88235e9966d0aa107106d368907b13306969f1a070fb53f9b6728c",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:885529258c9651ebda45698b359995e20126e6cfff067156eabb3f2e816469c8",
+        "dockerfile_sha256": "4fa38968914d40f52ad2b1cc51de10d0d0549db574826d645517d320cea139cb",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f621b12eb405a4c088df132f377b8443a60d67d1c451f7505b00bc9cb6956ab5",
         "toolchain_sha256": "65d600fa1c5df2cb9f527029f2bd8bb5841b0ccf7788a927c672536cb546c576",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -71088,19 +71242,26 @@
       "ldso": {
         "soname": "ld-linux.so.2"
       },
-      "interp": "",
+      "interp": "/lib/ld-linux.so.2",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux.so.2",
         "libBrokenLocale.so.1",
@@ -71127,43 +71288,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
-        "min": ""
+        "min": "4.1.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.17",
         "provides": "2.26"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-glibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "c1b5b06469735f56a889adaebcb1147426b991bb08c084b16d55ea18cbb3632d",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:b981166acb64fc6bddea12928edcc2676b3126b119055f6622d01ca546bec673",
+        "dockerfile_sha256": "0229bf897cf7f89bb1255548060c36fa58cc3af38e2fc8e002d81dfdfecc85ea",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:fe37faac8db7c6ff4219460c65c759be942421c02585e695401e6d167aba90cd",
         "toolchain_sha256": "d877a5b0adbad9a61b714ba8d0aca1b4b5df64c0d7a6bc16a0986577a74b7711",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -71178,19 +71342,26 @@
       "ldso": {
         "soname": "ld-linux.so.2"
       },
-      "interp": "",
+      "interp": "/lib/ld-linux.so.2",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
       "sysroot_sonames": [
         "ld-linux.so.2",
         "libBrokenLocale.so.1",
@@ -71217,43 +71388,46 @@
         "libthread_db.so.1",
         "libutil.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
-        "min": ""
+        "min": "4.4.0"
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
-        "requires": "",
+        "requires": "2.29",
         "provides": "2.30"
       },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-glibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "b5c1e66c3a879b6a27e628a9c4af95796b97109ad413a5d165020ad37f7e7a1a",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:7d3916ebe0ec0268065417e31654a67509e26306797c8b4020eba1bcf7956343",
+        "dockerfile_sha256": "af0c7f70e53b90f3b0351ad304ed12c4e8b17f3df6ee03fd369bc2ee7ab6e6e7",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:27fe67c23227b127bb265dd9b5b2b3975dbfde34f2ddd257d36f84f17e7e4220",
         "toolchain_sha256": "210a9f8a463e0caecb469c4f63a0de4a8aac2c97da6882e5895454a7862de160",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -71725,64 +71899,71 @@
       "triple": "i686-buildroot-linux-musl",
       "gcc_version": "9.3.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-i386.so.1",
+        "version": "1.1.24"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-i386.so.1",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.19.107",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-musl-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "1990a7863e5a1c63d8c1e1a49f6952020953c2734cd5c42a1dcac69ec79630a8",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:cef950e7928f7f0dcb2f8b57827fd2bb95868179f442b9da66d4dfba87a7c136",
+        "dockerfile_sha256": "e82daf6aaaf6feaf63b4946055019d0297d322c00e1eeb54ee3f03cb408361ef",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:7cc798d3cffd8d74314a5c8063be4c1ac62f505ab34f4ba61f0ae4955db57086",
         "toolchain_sha256": "a75946bd8383d2874cb6cacf6267a1c89cdb8c2f5e4d932265d21d5f71bd12a8",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -71871,64 +72052,71 @@
       "triple": "i686-buildroot-linux-musl",
       "gcc_version": "6.4.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-i386.so.1",
+        "version": "1.1.18"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-i386.so.1",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.1.49",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-musl-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "e574aced55121847ad750c802273ff26ea3beea6b7473818f4971a84fd67f8a6",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:6c0189c8960675ec5eb94f0efd92ebaaedfcffe7c65d36d40fcf58f53d8ae1be",
+        "dockerfile_sha256": "99f0765700b23ff405cc9bd7d25e91adbc6d5a93370a8945816e519abf808b3f",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:a75cce210f996b1febaeaa1147558c1e4b4bafd7127e590b279a46bde7a70618",
         "toolchain_sha256": "12f845f57990d20f8b171539db3c000c79f9aee46fb998aea3bdd0e60c0f203e",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -71936,64 +72124,71 @@
       "triple": "i686-buildroot-linux-musl",
       "gcc_version": "8.4.0",
       "libc": {
-        "kind": "unknown",
-        "soname": "",
-        "version": ""
+        "kind": "musl",
+        "soname": "ld-musl-i386.so.1",
+        "version": "1.1.24"
       },
       "ldso": {
         "soname": ""
       },
-      "interp": "",
+      "interp": "/lib/ld-musl-i386.so.1",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
       "sysroot_sonames": [
         "libatomic.so.1",
         "libgcc_s.so.1",
         "libstdc++.so.6"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
-        "time64_syscalls": "unknown"
+        "time64_syscalls": "none"
       },
       "kernel": {
         "headers": "4.4.215",
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-musl-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "7c425588096bde607448d24ee0ee4954f4c4b7549f6fb2522dab2965d7dfd5ba",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:fa7351541bb657187e2d463a8e44f67870118ce6694722a9089451be4aede857",
+        "dockerfile_sha256": "aea8386a2177a0169f1eca982ed7d406f56610741aa8fad1c850dfa3b84486e7",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:772d83ec295ff242fdca826482ef4cc0d2ca6315783512e2bd9ba63ba2915cdf",
         "toolchain_sha256": "e1bdbd913209f8fe58136f4f9c7c7148155a45c9733373109ba97b0cd7a05d34",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -72462,19 +72657,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -72483,9 +72682,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -72495,27 +72694,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-uclibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "74911941255ebcf2d9c0f0317ec4320994adcd4995d344167dad6e13984aa0ce",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:e1327417f0cf243129a19242db7b5df3ee9f39203a04b690f9ad16c7c812bf86",
+        "dockerfile_sha256": "3f84ab0a648bd9f53031b4eb8280b6bf7ad71885fed9a25573c9d199b73363db",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:3c6cc26605f28375cb7b77b1efe38737c97a344b6607ba7d648efa46c58be960",
         "toolchain_sha256": "497e61307cab9751aaeef3969afbcdf6b2120d5ece2beaba996eb04052b61985",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -72614,19 +72816,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -72635,9 +72841,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -72647,27 +72853,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-uclibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "258ea57f8b1fecb3da4bb698ae098846f81d1a7170aa53c0169a483437cedbaf",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:0bec940f2692fd67ecc32e59c560033abcaa182d4559b98856bf90b9c40afe8a",
+        "dockerfile_sha256": "7333980700190f7142aa90375175a730925a752d52cf2e94777bf0163b48d0a3",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:2cb958a559e9d668394098a5f4648979e2577bdb12c530802956852cb75c490e",
         "toolchain_sha256": "587d09cbcd719910862d96b259aed8663ef2c292f3a02b9f8ba4e95a2c353c6f",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -72682,19 +72891,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Intel 80386"
       },
       "isa": "",
-      "float_abi": "unknown",
+      "float_abi": "hard",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -72703,9 +72916,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
-      "march": "",
-      "hash_style": "none",
+      "cxx_ok": true,
+      "march": "i686",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -72715,27 +72928,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "x86",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/x86-i686-uclibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "30c850eccb6e1c866eee6a1f85ff38d0309849c6d399ecb1b836136ab076f8b5",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:42079babfcd6f97c90ff03e0bd7ed392bc171d252597deb7acce17e32e2a92d9",
+        "dockerfile_sha256": "ac1d82099876d70436c52dbfdccd97b2d290b100953c39580a8c2b0b0e8bb4aa",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:82c96d6f8351aa997344fd808bab13ae6beaf3b2f7216071cd062cd79100c784",
         "toolchain_sha256": "07544423c9403e012f18fe4558193ba49675831f4b332bb49f304ee4901a3f59",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -73132,19 +73348,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Tensilica Xtensa Processor"
       },
       "isa": "",
       "float_abi": "unknown",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -73153,9 +73373,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
+      "cxx_ok": true,
       "march": "",
-      "hash_style": "none",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -73165,27 +73385,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "xtensa",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x300",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/xtensa-lx60-uclibc-bleeding-edge-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "b45b84535229c2e095845941f27e67a64cc5a0b7c4b9c007e91cf6e98966a0ca",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f02bb23aa72ef5945fa94ab719580c31b146e94277e952fffe27fe7297754802",
+        "dockerfile_sha256": "7b5cb127c7738ebc56405731b1787c83349c3ee76967b81657ac8f513361f220",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:6751a00c9908876f46f2bdfe33ee12c98dc22f44b4395146a7157f8ac070029b",
         "toolchain_sha256": "a2a917ec0932eebdf543d008efc5491ee19561779b636535c757ac248017bdb2",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -73278,19 +73501,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Tensilica Xtensa Processor"
       },
       "isa": "",
       "float_abi": "unknown",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -73299,9 +73526,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
+      "cxx_ok": true,
       "march": "",
-      "hash_style": "none",
+      "hash_style": "sysv",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -73311,27 +73538,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "xtensa",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x300",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/xtensa-lx60-uclibc-stable-2018.02-1/Dockerfile",
-        "dockerfile_sha256": "e1cb5fd9f810ddedc9a078973777eabff708f9568cd38bc5273411ae2549faf7",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:d402ab18fad458f02f97fc86de82186a1d57e8ca3be472ff8e5b689fab219fde",
+        "dockerfile_sha256": "25bf7e7b310ad449c1aa08261cb1261a28f0640e8a0ecdfdc316654d1e66b76d",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:4ff10cbf6fe44c172d6edeee59be2bdf18207ab6834639d772cdf842729eada5",
         "toolchain_sha256": "6259c09975a0097f8a8c78407859a1d7bac21bf283000be0ec0167860cb418d0",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
@@ -73346,19 +73576,23 @@
       "ldso": {
         "soname": "ld-uClibc.so.1"
       },
-      "interp": "",
+      "interp": "/lib/ld-uClibc.so.0",
       "elf": {
         "class": "32",
-        "endian": "big",
-        "machine": ""
+        "endian": "little",
+        "machine": "Tensilica Xtensa Processor"
       },
       "isa": "",
       "float_abi": "unknown",
       "pie_default": false,
-      "needed": [],
-      "dynamic_ok": false,
-      "static_ok": false,
-      "needed_corpus": [],
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
       "sysroot_sonames": [
         "ld-uClibc.so.1",
         "libatomic.so.1",
@@ -73367,9 +73601,9 @@
         "libstdc++.so.6",
         "libthread_db.so.1"
       ],
-      "cxx_ok": false,
+      "cxx_ok": true,
       "march": "",
-      "hash_style": "none",
+      "hash_style": "both",
       "time": {
         "time_t_bits": 32,
         "time64_syscalls": "none"
@@ -73379,27 +73613,30 @@
         "min": ""
       },
       "probe": {
-        "status": "compile_failed",
+        "status": "ok",
         "error": ""
       },
+      "binary": {
+        "format": "elf"
+      },
       "arch": {
-        "family": "unknown",
+        "family": "xtensa",
         "abi": {}
       },
       "raw": {
-        "class": "",
-        "data": "",
-        "type": "",
-        "flags": "",
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x300",
         "fp_abi": ""
       },
       "provenance": {
         "dockerfile": "toolchains/xtensa-lx60-uclibc-stable-2020.02-1/Dockerfile",
-        "dockerfile_sha256": "3cd3ffa77e1f43d757543a021e2fd1393cb921ebfe30053074d60a658a9ec80a",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:6d90827509d225f0a1c3a04a4a165518b1b00950513aa5c388a5b79fb6fe69af",
+        "dockerfile_sha256": "0592a197b971d0c79e51e8d1a4bd823b2ca12eddf05b12d708aceab9606733c9",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:ff62dc6396d770d9d5f2a7e300d6ec3ceb556d76efa0876652819398163bcc95",
         "toolchain_sha256": "b16ee3e0cecb21561921930cca002b37dc9ca85a9fcee2b354aedc84de6d9983",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "7e4164e963e1e76cd2d22b1558e0bb491e9b1ae0750ab86e40a0f76e9c0936b9"
+        "normalize_version": "3d933c0db6411b00f66e84fd5bc992ecf510594c6943cdc5a7d73c0244b73227"
       }
     },
     {
