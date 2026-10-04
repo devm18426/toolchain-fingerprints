@@ -731,10 +731,15 @@ def cmd_import_bootlin(a):
         except (ValueError, OSError) as e:
             return tc_id, None, str(e).splitlines()[0]
 
+    # Print each result as it finishes, not in submission order, so one slow
+    # download doesn't hold back the lines of the ones already done.
     with concurrent.futures.ThreadPoolExecutor(a.jobs) as pool:
-        for tc_id, cc, err in pool.map(one, todo):
+        futures = [pool.submit(one, item) for item in todo]
+        for n, f in enumerate(concurrent.futures.as_completed(futures), 1):
+            tc_id, cc, err = f.result()
             (failed if err else done).append((tc_id, err or cc))
-            print(f"  {'FAILED' if err else 'ok    '} {tc_id}  {err or cc}", flush=True)
+            print(f"  [{n}/{len(todo)}] {'FAILED' if err else 'ok    '} {tc_id}  {err or cc}", flush=True)
+    failed.sort()
     print(f"imported {len(done)}, failed {len(failed)}, skipped {len(skipped)}")
     if a.summary:
         lines = [f"Imports {len(done)} Bootlin `{a.release}` toolchains with `gen.py import-bootlin`.", ""]
