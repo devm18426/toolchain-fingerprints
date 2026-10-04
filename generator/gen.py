@@ -441,6 +441,10 @@ def dockerfile_source_text(tc_id, comment, target, linux_arch, cc, sources):
         tc_id, " ".join(sorted(u for u, _ in sources)),
         hashlib.sha256("\n".join(sorted(h for _, h in sources)).encode()).hexdigest()).items())
     script = BUILD_SCRIPT.read_text(encoding="utf-8").rstrip("\n")
+    # headers_install copies with rsync since Linux 5.3; older headers don't need it,
+    # and leaving it out keeps older toolchains' Dockerfiles (so their images) unchanged
+    m = re.search(r"/linux-(\d+)\.(\d+)", " ".join(u for u, _ in sources))
+    extra = " rsync" if m and (int(m[1]), int(m[2])) >= (5, 3) else ""
     return f"""# {comment}
 # Built from source: nobody distributes this toolchain any more. Every source
 # tarball is pinned by sha256, the build host is a pinned Debian image with apt
@@ -451,7 +455,7 @@ FROM {SOURCE_BUILD_BASE} AS build
 RUN {apt} \\
  && apt-get -o Acquire::Check-Valid-Until=false update \\
  && apt-get install -y --no-install-recommends build-essential bison flex gawk texinfo file m4 \\
-      xz-utils bzip2 perl python3 \\
+      xz-utils bzip2 perl python3{extra} \\
  && rm -rf /var/lib/apt/lists/*
 {adds}ENV TARGET={target} LINUX_ARCH={linux_arch}
 RUN <<'BUILD'

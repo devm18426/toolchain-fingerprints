@@ -51,7 +51,9 @@ class Flags(unittest.TestCase):
                           ("armv7l", "arm"), ("i686", "x86"), ("x86_64", "x86_64"), ("ppc64le", "power"),
                           ("Analog Devices Blackfin", "blackfin"), ("C-SKY", "csky"),
                           ("Tilera TILE-Gx multicore architecture family", "tilegx"), ("tilegx", "tilegx"),
-                          ("Tilera TILEPro multicore architecture family", "tilepro"), ("tilepro", "tilepro")]:
+                          ("Tilera TILEPro multicore architecture family", "tilepro"), ("tilepro", "tilepro"),
+                          ("Intel IA-64", "ia64"), ("ia64", "ia64"), ("Alpha", "alpha"), ("alpha", "alpha"),
+                          ("HPPA", "parisc"), ("parisc", "parisc"), ("parisc64", "parisc")]:
             self.assertEqual(machine_family(name), fam, name)
 
 
@@ -226,6 +228,16 @@ class Lint(unittest.TestCase):
         runs = [args for _, kw, args in gen.instructions(text) if kw == "RUN"]
         self.assertTrue(any("step gcc-final gcc3" in r for r in runs))
         self.assertFalse(any(kw == "STEP" for _, kw, _ in gen.instructions(text)))
+
+    def test_source_build_installs_rsync_only_for_linux_5_3_headers(self):
+        def text(linux):
+            return gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc",
+                                              self.SOURCES + [(f"https://x/{linux}.tar.xz", "3" * 64)])
+        self.assertNotIn("rsync", text("linux-4.16.18"))
+        self.assertNotIn("rsync", text("linux-5.2.21"))
+        self.assertIn("python3 rsync", text("linux-5.3"))
+        self.assertIn("python3 rsync", text("linux-6.6.158"))
+        self.assertEqual(self.lint_text(text("linux-6.6.158")), [])
 
     def test_source_build_may_not_fetch_outside_the_snapshot(self):
         text = gen.dockerfile_source_text("zz-lint-test", "c", "x-linux-gnu", "x", "x-linux-gnu-gcc", self.SOURCES)
