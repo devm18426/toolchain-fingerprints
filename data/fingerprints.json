@@ -1,6 +1,6 @@
 {
   "schema_version": "2.5",
-  "generated_at": "2026-10-04T15:22:37Z",
+  "generated_at": "2026-10-04T17:08:58Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -4527,6 +4527,13 @@
         "headers": "6.6.158",
         "min": "3.2.0"
       },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
         "requires": "2.34",
         "provides": ""
@@ -4544,11 +4551,11 @@
       },
       "provenance": {
         "dockerfile": "toolchains/alpha-glibc-2.39/Dockerfile",
-        "dockerfile_sha256": "426e169f5ca011722d39d7ab25a2202796176875e35ac11a5cdc0cee2c653b08",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:f57e18e4923cd4ccca0b232b908a9038162c9f6135a0c4b788ef1bf2d137a88c",
+        "dockerfile_sha256": "09916b6d3b46c3c123f9b31a4f84c61b555fc1484b2f867fb1adde566edb0cc6",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:b4f8dd96bf8af56441c36f105e0a84fe18ad64ad7a8fa33fa652b324c5a742a0",
         "toolchain_sha256": "88f03af1ac6cdfc76aee37f029f8ffb49d71f656fccbbb7d13b6552fa481b55a",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "93885d98117298ef70fb5108de8b8874ac4cdc8f85fd01bc9d8c1981fa547956"
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
     },
     {
@@ -18878,6 +18885,13 @@
         "headers": "6.6.158",
         "min": "3.2.0"
       },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
       "glibc": {
         "requires": "2.34",
         "provides": "2.39"
@@ -18895,11 +18909,11 @@
       },
       "provenance": {
         "dockerfile": "toolchains/hppa-glibc-2.39/Dockerfile",
-        "dockerfile_sha256": "eb08cf2bad2eb6bfc0a3dc0d49302dd751089ad46ce97809a0ad592d41962867",
-        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:cddd3f4ceea50f4a145589f0f44bc543a96dcb198a5d34daae968ee08334d7f6",
+        "dockerfile_sha256": "19f378a1abf001e745b8f483404fa679f29a0ea772fae018467fc129ab6ae09f",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:0bfe84aa5b8216b6e48d044b716f4ea5577194b8bf75028ce9e953ff767f7412",
         "toolchain_sha256": "88f03af1ac6cdfc76aee37f029f8ffb49d71f656fccbbb7d13b6552fa481b55a",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
-        "normalize_version": "93885d98117298ef70fb5108de8b8874ac4cdc8f85fd01bc9d8c1981fa547956"
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
     },
     {
