@@ -68,7 +68,10 @@ glibc_start(){
   local libdir; libdir=$(realpath -m "$S/usr/lib/$("$TARGET"-gcc -print-multi-os-directory)")
   mkdir -p "$libdir"
   cp csu/crt1.o csu/crti.o csu/crtn.o "$libdir"/
-  "$TARGET"-gcc -nostdlib -nostartfiles -shared -x c /dev/null -o "$libdir/libc.so"
+  # Placeholder libc.so for the next GCC stage; glibc_full replaces it. It defines the libc
+  # functions libgcc's unwinder uses, because IA-64 links its libunwind.so with -z defs.
+  printf 'void %s(void){}\n' malloc free memcpy memset abort dl_iterate_phdr > stub.c
+  "$TARGET"-gcc -nostdlib -nostartfiles -shared -fno-builtin -w stub.c -o "$libdir/libc.so"
   touch "$S/usr/include/gnu/stubs.h"
 }
 gcc2(){
