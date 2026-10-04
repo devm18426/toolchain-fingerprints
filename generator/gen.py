@@ -7,6 +7,8 @@ Each step is its own command, so a failure points at one step:
     gen.py import-bootlin RELEASE  do that for every Bootlin toolchain of a release (filters available)
     gen.py new-from-source TC_ID --target T --linux-arch A URL...
                                   a toolchain nobody distributes: compiled from pinned sources in its Dockerfile
+    gen.py regen    [TC_ID...] [--compile-failed]
+                                  rewrite tarball Dockerfiles from the current template (pins kept)
     gen.py status                 what is up to date, stale, or invalid (read-only)
     gen.py lint     [TC_ID...]    check that every Dockerfile input is pinned
     gen.py build    TC_ID [--push] docker build toolchains/TC_ID (RUN steps have no network)
@@ -391,6 +393,16 @@ def static_labels(tc_id, url, sha256):
     }
 
 
+def build_prefix(url):
+    """Where a tarball toolchain was built: /opt/<tarball name without .tar.*>.
+    Bootlin (Buildroot) toolchains of some releases link their host binaries (cc1,
+    as, ld, ...) with an absolute RPATH into this directory instead of an
+    $ORIGIN-relative one, so unpacked anywhere else cc1 cannot load the libmpc and
+    libmpfr shipped next to it. Linking the prefix to /opt/tc makes that RPATH
+    resolve; for relocatable toolchains the link is unused."""
+    return "/opt/" + re.sub(r"\.tar(\.\w+)?$", "", url.rsplit("/", 1)[-1])
+
+
 def dockerfile_text(tc_id, comment, url, sha256, cc, comp):
     labels = " \\\n      ".join(f'{k}="{v}"' for k, v in static_labels(tc_id, url, sha256).items())
     tools = "".join(f"ADD --checksum=sha256:{h} \\\n    {u} /debs/\n" for u, h in BUILD_TOOLS)
@@ -407,6 +419,8 @@ FROM {DEBIAN}
 # build tools (make, patchelf, patch, xz, bzip2, pkg-config), pinned .debs
 {tools}RUN dpkg -i /debs/*.deb && rm -rf /debs
 COPY --from=fetch /tc /opt/tc
+# host binaries may carry an absolute RPATH into the prefix they were built in
+RUN ln -s /opt/tc {build_prefix(url)}
 ENV TC_ID={tc_id} \\
     CC=/opt/tc/bin/{cc} \\
     PATH=/opt/tc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -575,6 +589,55 @@ def scaffold(tc_id, url, cc=None, comment=None):
         shutil.rmtree(df.parent)
         raise ValueError("generated Dockerfile does not lint (this is a bug):\n  " + "\n  ".join(errs))
     return cc, sha
+
+
+def regen(tc_id):
+    """Rewrite a tarball toolchain's Dockerfile from the current template, keeping its
+    pinned inputs. Returns True if the file changed; raises ValueError."""
+    errs, facts = lint(tc_id)
+    if errs:
+        raise ValueError(f"{tc_id}: does not lint:\n  " + "\n  ".join(errs))
+    if facts["source_build"]:
+        raise ValueError(f"{tc_id}: built from source; there is no template to regenerate it from")
+    df = dockerfile(tc_id)
+    old = df.read_text(encoding="utf-8")
+    comment = old.split("\n", 1)[0].removeprefix("# ")
+    m = re.search(rf"tar -x(\w?)f {re.escape(TOOLCHAIN_DEST)}", old)
+    comp = {v: k for k, v in TAR_FLAGS.items()}.get(m.group(1) if m else None)
+    if comp is None:
+        raise ValueError(f"{tc_id}: cannot tell the tarball compression from the Dockerfile")
+    env = {}
+    for _, kw, args in instructions(old):
+        if kw == "ENV":
+            env.update(t.partition("=")[::2] for t in shlex.split(args))
+    new = dockerfile_text(tc_id, comment, facts["toolchain_url"], facts["toolchain_sha256"],
+                          env["CC"].rsplit("/", 1)[-1], comp)
+    if new == old:
+        return False
+    df.write_text(new, newline="\n")
+    errs, _ = lint(tc_id)
+    if errs:
+        df.write_text(old, newline="\n")
+        raise ValueError(f"{tc_id}: regenerated Dockerfile does not lint (this is a bug):\n  " + "\n  ".join(errs))
+    return True
+
+
+def cmd_regen(a):
+    ids = list(a.tc_ids)
+    if a.compile_failed:
+        ids += [tc for tc, r in sorted(load_data().items()) if r.get("probe", {}).get("status") == "compile_failed"]
+    ids = list(dict.fromkeys(ids))
+    if not ids:
+        die("name toolchains, or pass --compile-failed")
+    changed = []
+    for tc in ids:
+        need_toolchain(tc)
+        try:
+            if regen(tc):
+                changed.append(tc)
+        except ValueError as e:
+            die(str(e))
+    print(f"regenerated {len(changed)} of {len(ids)} Dockerfiles" + "".join(f"\n  {tc}" for tc in changed))
 
 
 def cmd_new(a):
@@ -1021,6 +1084,11 @@ def main():
     p.add_argument("--dry-run", action="store_true", help="list what would be imported")
     p.add_argument("--summary", help="write a markdown summary here (used as the PR body)")
     p.set_defaults(fn=cmd_import_bootlin)
+    p = sub.add_parser("regen", help="rewrite tarball Dockerfiles from the current template")
+    p.add_argument("tc_ids", nargs="*")
+    p.add_argument("--compile-failed", action="store_true",
+                   help="also every toolchain whose record has probe.status compile_failed")
+    p.set_defaults(fn=cmd_regen)
     p = sub.add_parser("status", help="show what is up to date")
     p.add_argument("--json", action="store_true", help="machine-readable, always exits 0")
     p.set_defaults(fn=cmd_status)

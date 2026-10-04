@@ -113,6 +113,37 @@ class Normalize(unittest.TestCase):
         self.assertEqual((r["hash_style"], r["march"], r["float_abi"], r["pie_default"]), ("sysv", "mips32", "hard", True))
         self.assertNotIn("glibc", r)
 
+    def test_nothing_compiled_is_marked_compile_failed(self):
+        self.assertEqual(normalize(self.RAW, "t")["probe"], {"status": "ok", "error": ""})
+        raw = dict(self.RAW, **{k + ".rc": "1" for k in ("link_dyn", "link_static", "time_t.4", "time_t.8")},
+                   **{"link_dyn.err": "\ngcc: error trying to exec 'cc1': execvp: No such file or directory\n"})
+        self.assertEqual(normalize(raw, "t")["probe"],
+                         {"status": "compile_failed", "error": "gcc: error trying to exec 'cc1': execvp: No such file or directory"})
+
+
+class Binary(unittest.TestCase):
+    # bFLT header: magic, rev, entry, data_start, data_end, bss_end, stack_size, reloc_start, reloc_count, flags
+    BFLT = b"bFLT" + (4).to_bytes(4, "big") + bytes(28) + (0x01 | 0x02 | 0x04).to_bytes(4, "big") + bytes(24)
+
+    def test_bflt_header_is_decoded(self):
+        raw = dict(Normalize.RAW, **{"dyn.magic": " ".join(f"{c:02x}" for c in self.BFLT), "dyn.h.rc": "1"})
+        self.assertEqual(normalize(raw, "t")["binary"],
+                         {"format": "bflt", "bflt": {"version": 4, "flags": ["ram", "gotpic", "gzip"]}})
+
+    def test_elf_without_magic_capture_is_recognised_by_readelf(self):
+        self.assertEqual(normalize(dict(Normalize.RAW, **{"dyn.h.rc": "0"}), "t")["binary"], {"format": "elf"})
+
+    def test_linked_but_unreadable_without_magic_is_unknown(self):
+        self.assertEqual(normalize(dict(Normalize.RAW, **{"dyn.h.rc": "1"}), "t")["binary"], {"format": "unknown"})
+
+    def test_flat_uclibc_without_magic_is_bflt_and_names_the_libc(self):
+        raw = {"link_dyn.rc": "0", "link_static.rc": "0", "dyn.h.rc": "1",
+               "uclibc_config": "#define __UCLIBC_MAJOR__ 1\n#define __UCLIBC_MINOR__ 0\n#define __UCLIBC_SUBLEVEL__ 28\n"
+                                "#define __UCLIBC_FORMAT_FLAT__ 1\n#undef __UCLIBC_FORMAT_SHARED_FLAT__\n"}
+        r = normalize(raw, "t")
+        self.assertEqual(r["binary"], {"format": "bflt"})
+        self.assertEqual((r["libc"]["kind"], r["libc"]["version"]), ("uclibc", "1.0.28"))
+
 
 class March(unittest.TestCase):
     def test_empty_default_march_does_not_swallow_the_next_option(self):
@@ -240,6 +271,27 @@ class Lint(unittest.TestCase):
         self.assertTrue(any("deb.debian.org" in e for e in errs))
         errs = self.lint_text(text.replace("RUN <<'BUILD'", "RUN curl -O https://x/y\nRUN <<'BUILD'", 1))
         self.assertTrue(any("curl" in e for e in errs))
+
+    def test_template_links_the_build_prefix(self):
+        text = gen.dockerfile_text("zz-lint-test", "c", "https://x/aarch64--glibc--stable-2018.02-1.tar.bz2",
+                                   "d" * 64, "x-gcc", "bz2")
+        self.assertIn("RUN ln -s /opt/tc /opt/aarch64--glibc--stable-2018.02-1\n", text)
+
+    def test_regen_keeps_pins_and_adds_only_the_template_change(self):
+        url = "https://x/tc--x--stable-1.tar.xz"
+        old = gen.dockerfile_text("zz-lint-test", "Vendor tc", url, "d" * 64, "x-gcc", "xz")
+        old = old.replace(f"RUN ln -s /opt/tc {gen.build_prefix(url)}\n", "")   # a Dockerfile from before the link
+        d = gen.TOOLCHAINS / "zz-lint-test"
+        d.mkdir(exist_ok=True)
+        try:
+            (d / "Dockerfile").write_text(old, newline="\n")
+            self.assertTrue(gen.regen("zz-lint-test"))
+            self.assertEqual((d / "Dockerfile").read_text(),
+                             gen.dockerfile_text("zz-lint-test", "Vendor tc", url, "d" * 64, "x-gcc", "xz"))
+            self.assertFalse(gen.regen("zz-lint-test"))                               # idempotent
+        finally:
+            (d / "Dockerfile").unlink()
+            d.rmdir()
 
     def test_prebuilt_still_may_not_use_apt(self):
         errs = self.lint_text(self.GOOD + "RUN apt-get install -y make\n")
