@@ -70,11 +70,14 @@ for src in "$here"/corpus/*.c "$here"/corpus/*.cc; do
     cap "corpus.$n.V" "$RE" -V "$W/$n"
     cap "corpus.$n.syms" "$RE" -W --dyn-syms "$W/$n"
     cap "corpus.$n.n" "$RE" -n "$W/$n"
+    cap "corpus.$n.A" "$RE" -A "$W/$n"
   fi
 done
 
 # --- compiler defaults ----------------------------------------------------------
-cap gcc_target "$CC" -Q --help=target
+# with an input to compile: wrappers that add -Wl,... give the driver a linker input,
+# and with no source file to hand to cc1 it then prints nothing (and exits 0)
+cap gcc_target "$CC" -Q --help=target -S -x c /dev/null -o /dev/null
 
 # --- sysroot: headers, libc config, shipped sonames -----------------------------
 if [ -n "$sysroot" ]; then
