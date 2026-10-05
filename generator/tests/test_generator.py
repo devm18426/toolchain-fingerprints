@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import gen  # noqa: E402
-from normalize import _arm, _decode_arch, _mips, _riscv, _time64, normalize  # noqa: E402
+from normalize import _arm, _decode_arch, _default_cpu, _mips, _riscv, _time64, normalize  # noqa: E402
 
 
 class Flags(unittest.TestCase):
@@ -191,6 +191,20 @@ class Binary(unittest.TestCase):
 
 
 class March(unittest.TestCase):
+    def test_default_cpu(self):
+        self.assertEqual(_default_cpu("mips", "  -march=ISA  \t\tmips32r2\n  -mtune=PROCESSOR  \t\t\n"), "mips32r2")
+        # AArch64: -march has no default, -mcpu does
+        self.assertEqual(_default_cpu("aarch64", "  -march=ARCH  \t\t\n  -mcpu=CPU  \t\tcortex-a53\n"), "cortex-a53")
+        # older ARM gcc: placeholder -march, real -mcpu
+        self.assertEqual(_default_cpu("arm", "  -march=  \t\tarmv2\n  -mcpu=  \t\tarm926ej-s\n"), "arm926ej-s")
+        self.assertEqual(_default_cpu("csky", "  -march=  \t\tck801\n  -mcpu=  \t\t[default]\n"), "ck801")
+        self.assertEqual(_default_cpu("power", "  -mcpu=  \t\t440fp\n  -mtune=  \t\t440fp\n"), "440fp")
+        self.assertEqual(_default_cpu("arc", "  -mcpu=CPU  \t\tarchs\n  -mtune=TUNE  \t\t[default]\n"), "archs")
+        self.assertEqual(_default_cpu("sh", "  -m4  \t\t[enabled]\n  -m4-nofpu  \t\t[disabled]\n"), "sh4")
+        self.assertEqual(_default_cpu("sh", "  -m4a  \t\t[enabled]\n"), "sh4a")
+        self.assertEqual(_default_cpu("sparc", "  -m64  \t\t[enabled]\n"), "")      # only SH names its CPU by a flag
+        self.assertEqual(_default_cpu("xtensa", "  -mlongcalls  \t\t[disabled]\n"), "")
+
     def test_empty_default_march_does_not_swallow_the_next_option(self):
         # AArch64 gcc prints an empty -march default
         raw = dict(Normalize.RAW, gcc_target="  -march=ARCH  \t\t\n  -mbig-endian  \t\t[disabled]\n")

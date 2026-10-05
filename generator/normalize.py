@@ -205,6 +205,20 @@ def _decode_arch(machine, flags, attrs, elf64=False, target="", triple=""):
     return family, abi, fl
 
 
+# --- default CPU ----------------------------------------------------------------
+def _default_cpu(family, target):
+    """The compiler's default target CPU: its -mcpu where that has a value, else its -march.
+    -mcpu first: older ARM and m68k compilers report a placeholder -march (armv2, 68000) next
+    to the real -mcpu (arm926ej-s, 68040). SH names it with a flag (-m4 / -m4a [enabled]).
+    Empty when the compiler has no such option (Xtensa, OpenRISC: the core is fixed at build)."""
+    for opt in ("mcpu", "march"):
+        m = re.search(rf"^[ \t]*-{opt}=\S*[ \t]+([^\s\[]\S*)[ \t]*$", target, re.M)
+        if m:
+            return m.group(1)
+    m = re.search(r"^[ \t]*-m(\d[\w-]*)[ \t]+\[enabled\]", target, re.M) if family == "sh" else None
+    return "sh" + m.group(1) if m else ""
+
+
 # --- time64 --------------------------------------------------------------------
 def _time64(kind, elf64, time_bits, libc_ver, uclibc_cfg, kmin):
     """How the libc's time calls reach the kernel.
@@ -343,6 +357,7 @@ def normalize(raw, tc_id):
         "sysroot_sonames": sorted(set(g("sysroot_sonames").split())),
         "cxx_ok": bool(g("cxx")) and ok("corpus.cxx.link"),
         "march": m.group(1) if m else "",
+        "cpu": _default_cpu(family, g("gcc_target")),
         "hash_style": "both" if has_hash and has_gnu else "gnu" if has_gnu else "sysv" if has_hash else "none",
         "time": {
             "time_t_bits": time_bits,

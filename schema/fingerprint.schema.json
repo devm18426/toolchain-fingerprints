@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "fingerprint.schema.json",
   "title": "Cross-toolchain ABI fingerprints",
-  "x-version": "2.5",
+  "x-version": "2.6",
   "description": "The only contract between the generator and its consumers. Compatibility rules, so that data published later still works with consumers written earlier: (1) within a major version, fields are only ever added, never renamed, removed or retyped; (2) consumers must ignore properties they do not know; (3) fields marked with x-known-values are open enums: new values may appear in a minor version, and consumers must treat a value they do not know as unknown; (4) consumers must refuse a major version they do not know. This schema is therefore tolerant (unknown properties and values validate); the generator validates in strict mode, where x-known-values and the listed properties are exhaustive.",
   "type": "object",
   "required": [
@@ -176,6 +176,10 @@
         "march": {
           "type": "string",
           "description": "Compiler default -march (gcc -Q --help=target)."
+        },
+        "cpu": {
+          "type": "string",
+          "description": "Added in 2.6. The compiler's default target CPU (gcc -Q --help=target): its -mcpu where that has a value, else its -march; for SuperH the enabled -m<cpu> flag (sh4, sh4a). Prefer this to march, which some older ARM and m68k compilers report as a placeholder (armv2, 68000). Empty when the compiler has no such option (the core is fixed when it is built, e.g. Xtensa, OpenRISC)."
         },
         "hash_style": {
           "description": "DT_HASH / DT_GNU_HASH in a default dynamic link. Old loaders only read DT_HASH.",
