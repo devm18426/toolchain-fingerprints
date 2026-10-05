@@ -136,8 +136,8 @@ def machine_family(name):
     return s.split()[0] if s else "unknown"
 
 
-# family -> ABI decoder. Families without one still get a full record; only
-# float_abi is "unknown" and arch.abi is empty.
+# family -> ABI decoder. Families without one still get a full record with an
+# empty arch.abi; float_abi then comes from _float_fallback (or is "unknown").
 DECODERS = {
     "mips": _mips,
     "arm": _arm,
@@ -154,11 +154,55 @@ DECODERS = {
 }
 
 
-def _decode_arch(machine, flags, attrs):
+# Where the ELF output does not say (no flag or attribute for it, or the test
+# program passes no floats), the compiler's own defaults from -Q --help=target do.
+def _target_float(target):
+    m = re.search(r"^\s*-mfloat-abi=\s+(hard|softfp|soft)\s*$", target, re.M)
+    if m:
+        return m.group(1)
+    for opt, fl in (("soft", "soft"), ("hard", "hard")):
+        if re.search(rf"^\s*-m{opt}-float\s+\[enabled\]", target, re.M):
+            return fl
+    return "unknown"
+
+
+# Families whose Linux ABI has one float calling convention, used when neither the
+# ELF output nor the compiler defaults answer.
+#  soft: no floating-point argument registers. MicroBlaze, OpenRISC, Nios II and ARC
+#        FPUs work on the general registers, Xtensa passes floats in address
+#        registers, Blackfin has no FPU; an FPU changes the instructions, not the ABI.
+#  hard: SPARC and s390 Linux pass floats in FP registers.
+_ONE_FLOAT_ABI = {"microblaze": "soft", "openrisc": "soft", "nios2": "soft", "arc": "soft",
+                  "xtensa": "soft", "blackfin": "soft", "sparc": "hard", "s390": "hard"}
+
+
+def _float_fallback(family, flags, elf64, target, triple):
+    if _ONE_FLOAT_ABI.get(family) == "soft":
+        return "soft"
+    fl = _target_float(target)
+    if fl != "unknown":
+        return fl
+    cpu = triple.split("-")[0]
+    if family == "m68k" and flags & 0xf:            # EF_M68K_CF_ISA_MASK: ColdFire
+        return "hard" if flags & 0x40 else "soft"    # EF_M68K_CF_FLOAT
+    if family == "sh" and re.match(r"sh4(?!.*nofpu)", cpu):    # SH-4 Linux passes floats in FR registers
+        return "hard"
+    if family == "sh" and re.match(r"sh[123](?!e|a)", cpu):    # SH-1/2/3 without FPU
+        return "soft"
+    if family == "power" and elf64:
+        return "hard"
+    return _ONE_FLOAT_ABI.get(family, "unknown")
+
+
+def _decode_arch(machine, flags, attrs, elf64=False, target="", triple=""):
     family = machine_family(machine)
     if family in DECODERS:
-        return DECODERS[family](flags, attrs)
-    return family, {}, "unknown"
+        family, abi, fl = DECODERS[family](flags, attrs)
+    else:
+        abi, fl = {}, "unknown"
+    if fl == "unknown":
+        fl = _float_fallback(family, flags, elf64, target or "", triple or "")
+    return family, abi, fl
 
 
 # --- time64 --------------------------------------------------------------------
@@ -265,7 +309,7 @@ def normalize(raw, tc_id):
     has_hash, has_gnu = bool(re.search(r"\(HASH\)", dyn)), bool(re.search(r"\(GNU_HASH\)", dyn))
     m = re.search(r"^[ \t]*-march=\S*[ \t]+(\S*)[ \t]*$", g("gcc_target"), re.M)   # empty on some arches
 
-    family, arch_abi, float_abi = _decode_arch(machine, flags, attrs)
+    family, arch_abi, float_abi = _decode_arch(machine, flags, attrs, cls == "ELF64", g("gcc_target"), g("triple"))
 
     # Nothing compiled: every field derived from compiler output below is a default, not a fact.
     compiled = any(ok(k) for k in ("link_dyn", "link_static", "time_t.4", "time_t.8"))

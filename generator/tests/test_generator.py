@@ -45,6 +45,30 @@ class Flags(unittest.TestCase):
         self.assertEqual(_decode_arch("Renesas / SuperH SH", 0, "")[0], "sh")
         self.assertEqual(_decode_arch("Some Future CPU", 0, "")[0], "some")
 
+    def test_float_abi_from_compiler_defaults(self):
+        # ELF output says nothing; gcc -Q --help=target does
+        sparc = "  -mhard-float                \t\t[enabled]\n  -msoft-float                \t\t[disabled]\n"
+        self.assertEqual(_decode_arch("Sparc v9", 0x2, "", True, sparc)[2], "hard")
+        m68k = "  -mhard-float                \t\t[disabled]\n  -msoft-float                \t\t[enabled]\n"
+        self.assertEqual(_decode_arch("MC68000", 0, "", False, m68k)[2], "soft")
+        csky = "  -mfloat-abi=                \t\tsoft\n  -mfloat-abi=v2              \t\t-mfloat-abi=hard\n"
+        self.assertEqual(_decode_arch("CSKY", 0x21000008, "", False, csky)[2], "soft")
+        ppc = "  -mhard-float                \t\t[enabled]\n"
+        self.assertEqual(_decode_arch("PowerPC", 0, "", False, ppc)[2], "hard")
+        self.assertEqual(_decode_arch("", 0, "", False, m68k)[:3:2], ("unknown", "soft"))    # bFLT: no ELF header
+
+    def test_float_abi_without_compiler_defaults(self):
+        self.assertEqual(_decode_arch("Xilinx MicroBlaze", 0, "")[2], "soft")       # one ABI: floats in GPRs
+        self.assertEqual(_decode_arch("Xilinx MicroBlaze", 0, "", False, "  -mhard-float\t\t[enabled]")[2], "soft")
+        self.assertEqual(_decode_arch("Sparc", 0, "")[2], "hard")
+        self.assertEqual(_decode_arch("PowerPC64", 0x1, "", True)[2], "hard")
+        self.assertEqual(_decode_arch("PowerPC", 0, "")[2], "unknown")             # 32-bit: could be either
+        self.assertEqual(_decode_arch("Renesas / SuperH SH", 0x2, "", False, "", "sh4-buildroot-linux-gnu")[2], "hard")
+        self.assertEqual(_decode_arch("Renesas / SuperH SH", 0x2, "", False, "", "sh2-buildroot-linux-gnu")[2], "soft")
+        self.assertEqual(_decode_arch("MC68000", 0, "", False, "", "m68k-buildroot-linux-gnu")[2], "unknown")
+        self.assertEqual(_decode_arch("MC68000", 0x8, "")[2], "soft")             # ColdFire ISA, no FPU flag
+        self.assertEqual(_decode_arch("MC68000", 0x48, "")[2], "hard")
+
     def test_families_cover_bootlin_and_uname_names(self):
         from normalize import machine_family
         for name, fam in [("MC68000", "m68k"), ("Xilinx MicroBlaze", "microblaze"), ("microblazeel", "microblaze"),
