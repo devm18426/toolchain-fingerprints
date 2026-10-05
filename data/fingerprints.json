@@ -1,6 +1,6 @@
 {
   "schema_version": "2.6",
-  "generated_at": "2026-10-05T18:42:11Z",
+  "generated_at": "2026-10-05T22:08:39Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -125204,6 +125204,80 @@
       }
     },
     {
+      "tc_id": "openrisc-musl-bleeding-edge-2021.11-4",
+      "triple": "or1k-buildroot-linux-musl",
+      "gcc_version": "11.2.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-or1k.so.1",
+        "version": "1.2.2"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-or1k.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "OpenRISC 1000"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": true,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
+      "sysroot_sonames": [
+        "libatomic.so.1",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "fallback"
+      },
+      "kernel": {
+        "headers": "5.4.163",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "openrisc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/openrisc-musl-bleeding-edge-2021.11-4/Dockerfile",
+        "dockerfile_sha256": "f4a4a594eb364448a08ac78df51e5d2976e61d1bc0f2c06bafc07349ad46f159",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:72cb033de9d7bee1dedd2a70885cc3334b968580682830318d2d3c5dd3b45bda",
+        "toolchain_sha256": "9100a143a2f96c46d4d593fb25f4cab4a2efc61371f12bd1a686fbd52ee64c63",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
       "tc_id": "openrisc-musl-bleeding-edge-2022.08-1",
       "triple": "or1k-buildroot-linux-musl",
       "gcc_version": "12.2.0",
@@ -126097,6 +126171,80 @@
       }
     },
     {
+      "tc_id": "openrisc-musl-stable-2021.11-4",
+      "triple": "or1k-buildroot-linux-musl",
+      "gcc_version": "10.3.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-or1k.so.1",
+        "version": "1.2.2"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-or1k.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "OpenRISC 1000"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": true,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
+      "sysroot_sonames": [
+        "libatomic.so.1",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "fallback"
+      },
+      "kernel": {
+        "headers": "4.9.291",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "openrisc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Shared object file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/openrisc-musl-stable-2021.11-4/Dockerfile",
+        "dockerfile_sha256": "802e70159a06084f6cd7dd48b8c1b3d8787cc176cd9ee81b4cb54ab16ef066b1",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:95bd2d1c587c6e402407fbc4b3489ce1ddab74a10de6c20fe6ee943f1e6dd302",
+        "toolchain_sha256": "72fce2be59c18a5b3a02f51ebb83119a0f3d29ab7f2d5cd560038ff6f94f137a",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
       "tc_id": "openrisc-musl-stable-2022.08-1",
       "triple": "or1k-buildroot-linux-musl",
       "gcc_version": "11.3.0",
@@ -126778,6 +126926,83 @@
         "dockerfile_sha256": "73eff50d9385aa79b2531a8cbf72e0ab62e39eea9e98f70898aed0ce011a427b",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:53d2a4abaac668673db8a41d9f4b74454130b39049b961382faf86ec50d1013c",
         "toolchain_sha256": "85171daa8556bba550a48fe9ef7783ef465de79e2f41a2188cefea0c01dcb804",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
+      "tc_id": "openrisc-uclibc-bleeding-edge-2021.11-4",
+      "triple": "or1k-buildroot-linux-uclibc",
+      "gcc_version": "11.2.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.39"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "OpenRISC 1000"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "5.4.163",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "openrisc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/openrisc-uclibc-bleeding-edge-2021.11-4/Dockerfile",
+        "dockerfile_sha256": "3e0581d642d0b22ee76a73563fda2b46ccfd6170dcefc76f26d8355bcd48486f",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:9e766eb3e09a992943fa224b548d9ed5fc48ceb5de994f124f684c09b7b69823",
+        "toolchain_sha256": "ffbdedf741bcfeadaf0c52ac09af83b24eedca2e9a5fc563127c5fdbd10c79a6",
         "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
         "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
       }
@@ -127714,6 +127939,83 @@
         "dockerfile_sha256": "c5cf8433f38c3992d82543ed3659b449dd81f4595c0c751dd0c7890b7e6cda98",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:7fdc175817a4504b387fbf0d8f36e7c780a240984f3ca0fae838f90b8c86d06f",
         "toolchain_sha256": "4f13b2ef95c3dfd886cd696de28bd29b20bc3379103fd6f76c9cf0816d34a5c6",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
+      "tc_id": "openrisc-uclibc-stable-2021.11-4",
+      "triple": "or1k-buildroot-linux-uclibc",
+      "gcc_version": "10.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.39"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "OpenRISC 1000"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.9.291",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "openrisc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Shared object file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/openrisc-uclibc-stable-2021.11-4/Dockerfile",
+        "dockerfile_sha256": "225b621f329852c7b57d25ec06a984c3384bf5bc38049ff5052c8ac1c4d9b32d",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:d3b4b724a04df0044a3fb63aed6e2336d8afa7d4bc5da62710729935d5d990de",
+        "toolchain_sha256": "082ec406a6a516d582a092e63f9078e200a1e32dc24d47928f90c09b1e61819b",
         "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
         "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
       }
