@@ -135,7 +135,7 @@
           "description": "ISA line from readelf -A on the probe binary; empty if the arch has none."
         },
         "float_abi": {
-          "description": "From the ELF attributes/flags, not free text: MIPS FP ABI, ARM Tag_ABI_VFP_args / e_flags.",
+          "description": "Float calling convention, not free text. From the ELF attributes/flags (MIPS FP ABI, ARM Tag_ABI_VFP_args / e_flags) where they say; else from the compiler defaults (gcc -Q --help=target) or the one ABI the architecture has.",
           "type": "string",
           "x-known-values": [
             "hard",
