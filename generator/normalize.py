@@ -285,7 +285,9 @@ def normalize(raw, tc_id):
         parts = [macro("__GLIBC__", feat), macro("__GLIBC_MINOR__", feat)]
         libc_ver = ".".join(parts) if all(parts) else _summary_version(summary, "glibc")
     elif kind == "musl":
-        libc_ver = _summary_version(summary, "musl")
+        # some SDKs ship an empty summary.csv (2021.05-1); then the version string in libc.so
+        mv = g("musl_version").split()
+        libc_ver = _summary_version(summary, "musl") or (mv[0] if len(mv) == 1 else "")
     else:
         libc_ver = ""
 

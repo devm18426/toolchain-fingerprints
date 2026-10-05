@@ -149,6 +149,15 @@ class Normalize(unittest.TestCase):
         self.assertEqual((r["float_abi"], r["arch"]["abi"]["fp"]), ("soft", "soft float"))
         self.assertNotIn("libm.so.6", r["needed_corpus"])        # fpabi only probes the float ABI
 
+    def test_musl_version_from_libc_when_the_summary_is_empty(self):
+        raw = dict(Normalize.RAW, **{"triple": "mips-buildroot-linux-musl", "uclibc_config": "", "features_h": "",
+                                     "dyn.l": "      [Requesting program interpreter: /lib/ld-musl-mips.so.1]\n",
+                                     "summary": "", "musl_version": "1.2.2\n"})
+        self.assertEqual(normalize(raw, "t")["libc"]["version"], "1.2.2")
+        summary = '"musl","1.2.5","MIT","COPYRIGHT","musl-1.2.5.tar.gz"\n'
+        self.assertEqual(normalize(dict(raw, summary=summary), "t")["libc"]["version"], "1.2.5")   # summary first
+        self.assertEqual(normalize(dict(raw, musl_version="1.2.2\n9.4.0\n"), "t")["libc"]["version"], "")  # ambiguous
+
     def test_nothing_compiled_is_marked_compile_failed(self):
         self.assertEqual(normalize(self.RAW, "t")["probe"], {"status": "ok", "error": ""})
         raw = dict(self.RAW, **{k + ".rc": "1" for k in ("link_dyn", "link_static", "time_t.4", "time_t.8")},

@@ -48,8 +48,13 @@ soname(){ "$RE" -d "$1" 2>/dev/null | sed -n 's/.*(SONAME).*\[\(.*\)\]/\1/p' | h
 first_soname(){ for f in "$@"; do [ -e "$f" ] || continue; s="$(soname "$f")"; [ -n "$s" ] && { echo "$s"; return; }; done; }
 if [ -n "$sysroot" ]; then
   # lib64/ and lib/<multiarch>/ cover 64-bit and Debian-style sysroots
-  put ldso_soname "$(first_soname "$sysroot"/lib/ld-*.so* "$sysroot"/lib/ld.so* "$sysroot"/lib/ld64.so*                                   "$sysroot"/lib64/ld-*.so* "$sysroot"/lib64/ld64.so* "$sysroot"/lib/*/ld-*.so*)"
+  put ldso_soname "$(first_soname "$sysroot"/lib/ld-*.so* "$sysroot"/lib/ld.so* "$sysroot"/lib/ld64.so*                                   "$sysroot"/lib64/ld-*.so* "$sysroot"/lib64/ld64.so* "$sysroot"/lib/*/ld-*.so* "$sysroot"/lib/ld64-*.so*)"
   put libc_soname "$(first_soname "$sysroot"/lib/libc.so* "$sysroot"/lib/libuClibc*.so                                   "$sysroot"/lib64/libc.so* "$sysroot"/lib/*/libc.so*)"
+  # musl's headers carry no version; its libc does (the loader's usage text). Read libc.so
+  # itself: ld-musl-*.so.1 may be an absolute symlink, which points outside the sysroot here.
+  if [ -x "${pfx}strings" ] && [ -f "$sysroot/lib/libc.so" ] && ls "$sysroot"/lib/ld-musl-*.so.1 >/dev/null 2>&1; then
+    cap musl_version sh -c '"$1" -n 5 "$2" | grep -xE "[0-9]+\.[0-9]+\.[0-9]+" | sort -u' _ "${pfx}strings" "$sysroot/lib/libc.so"
+  fi
 fi
 
 # --- time_t width -----------------------------------------------------------
