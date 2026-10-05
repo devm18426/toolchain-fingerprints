@@ -71,6 +71,8 @@
   "link_static.rc": "0\n",
   "linux_version_h": "#define LINUX_VERSION_CODE 265808\n#define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))\n",
   "linux_version_h.rc": "0\n",
+  "musl_version": "1.1.20\n",
+  "musl_version.rc": "0\n",
   "summary": "\"musl\",\"1.1.20\",\"MIT\",\"COPYRIGHT\",\"musl-1.1.20.tar.gz\",\"http://www.musl-libc.org/releases\",\"linux-headers [GPL-2.0] musl-compat-headers [BSD-3-Clause, Public Domain or CC0] skeleton-init-common [unknown] skeleton-init-none [unknown]\"\n\"linux-headers\",\"4.14.80\",\"GPL-2.0\",\"COPYING\",\"linux-4.14.80.tar.xz\",\"https://cdn.kernel.org/pub/linux/kernel/v4.x\",\"skeleton-init-common [unknown] skeleton-init-none [unknown]\"\n",
   "summary.rc": "0\n",
   "sysroot": "/opt/tc/mips-buildroot-linux-musl/sysroot\n",

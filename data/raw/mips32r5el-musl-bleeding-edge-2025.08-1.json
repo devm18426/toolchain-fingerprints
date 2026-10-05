@@ -71,6 +71,8 @@
   "link_static.rc": "0\n",
   "linux_version_h": "#define LINUX_VERSION_CODE 331709\n#define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + ((c) > 255 ? 255 : (c)))\n#define LINUX_VERSION_MAJOR 5\n#define LINUX_VERSION_PATCHLEVEL 15\n#define LINUX_VERSION_SUBLEVEL 189\n",
   "linux_version_h.rc": "0\n",
+  "musl_version": "1.2.5\n",
+  "musl_version.rc": "0\n",
   "summary": "\"musl\",\"1.2.5\",\"MIT\",\"COPYRIGHT\",\"musl-1.2.5.tar.gz\",\"http://musl.libc.org/releases\",\"linux-headers [GPL-2.0] musl-compat-headers [BSD-3-Clause, Public Domain or CC0] skeleton-init-common [unknown] skeleton-init-none [unknown]\"\n\"linux-headers\",\"5.15.189\",\"GPL-2.0\",\"\",\"linux-5.15.189.tar.xz\",\"https://cdn.kernel.org/pub/linux/kernel/v5.x\",\"skeleton-init-common [unknown] skeleton-init-none [unknown]\"\n",
   "summary.rc": "0\n",
   "sysroot": "/opt/tc/mipsel-buildroot-linux-musl/sysroot\n",
