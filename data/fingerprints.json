@@ -1,6 +1,6 @@
 {
   "schema_version": "2.6",
-  "generated_at": "2026-10-05T14:26:10Z",
+  "generated_at": "2026-10-05T18:42:11Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -16065,6 +16065,107 @@
         "dockerfile_sha256": "f9cc3734e565125f60407e4fdc85a1c76f0c6f88c7e8454795b361cf97e911db",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:97ff5c7b708b1d0b9fef299edbeb5cef88df811d172db51d6a68b40f352cf5d3",
         "toolchain_sha256": "ca73399803b6bb46cf27aa2bef5f98eae05fb2fa547403777354067117b44f2f",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
+      "tc_id": "arcle-hs38-glibc-stable-2021.11-3",
+      "triple": "arc-buildroot-linux-gnu",
+      "gcc_version": "10.2.0",
+      "libc": {
+        "kind": "glibc",
+        "soname": "libc.so.6",
+        "version": "2.34"
+      },
+      "ldso": {
+        "soname": "ld-linux-arc.so.2"
+      },
+      "interp": "/lib/ld-linux-arc.so.2",
+      "elf": {
+        "class": "32",
+        "endian": "little",
+        "machine": "ARCv2"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": true,
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "ld-linux-arc.so.2",
+        "libc.so.6",
+        "libm.so.6"
+      ],
+      "sysroot_sonames": [
+        "ld-linux-arc.so.2",
+        "libBrokenLocale.so.1",
+        "libSegFault.so",
+        "libanl.so.1",
+        "libatomic.so.1",
+        "libc.so.6",
+        "libc_malloc_debug.so.0",
+        "libcrypt.so.1",
+        "libdl.so.2",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libm.so.6",
+        "libmemusage.so",
+        "libnss_compat.so.2",
+        "libnss_db.so.2",
+        "libnss_dns.so.2",
+        "libnss_files.so.2",
+        "libnss_hesiod.so.2",
+        "libpcprofile.so",
+        "libpthread.so.0",
+        "libresolv.so.2",
+        "librt.so.1",
+        "libstdc++.so.6",
+        "libthread_db.so.1",
+        "libutil.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "archs",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "required"
+      },
+      "kernel": {
+        "headers": "5.4.163",
+        "min": "5.4.0"
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "glibc": {
+        "requires": "2.34",
+        "provides": "2.34"
+      },
+      "arch": {
+        "family": "arc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "DYN (Shared object file)",
+        "flags": "0x406, ARC HS, v4 ABI",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/arcle-hs38-glibc-stable-2021.11-3/Dockerfile",
+        "dockerfile_sha256": "2b988ae66aee5563b4ef660f247f3a1e3b2374c654a91155393673b679dd435c",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:4a1ea9e911c480d06698e02e311d57a3f56b429b6a2355176a042bfc639a6b4b",
+        "toolchain_sha256": "c7c00e3dcdb5123098cea365cfcf261e36adcf816bdd62e4e1ad661e1145f084",
         "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
         "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
       }
@@ -180778,6 +180879,83 @@
         "dockerfile_sha256": "8d0328e1a9be9377daa598e7048e8c259aec9dd131ea5e3864b97c513d9036d4",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:36964654900794efc9024c2c8526b9da37b901cde016943883c5e6f1221d9456",
         "toolchain_sha256": "f6fad3ae6491a953fe604fb7d5ee42c183e700fa5651e45c84a433ac151cdefc",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
+      "tc_id": "sparcv8-uclibc-bleeding-edge-2021.11-3",
+      "triple": "sparc-buildroot-linux-uclibc",
+      "gcc_version": "10.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.39"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "Sparc"
+      },
+      "isa": "",
+      "float_abi": "hard",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "v8",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "5.4.163",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "sparc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/sparcv8-uclibc-bleeding-edge-2021.11-3/Dockerfile",
+        "dockerfile_sha256": "6fcf483a28c9c56f1ab51a8d506ecf064e0575d8e7ec9b84d31394d04c389ab9",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:00a9d180d561b25eae90f0821bb2cd9d138650f18b4c396ae26aaae928a22153",
+        "toolchain_sha256": "3c85420becb7caa84a9a229483f3f2d7158eb66817acdfa5d5700c3a05436cba",
         "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
         "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
       }
