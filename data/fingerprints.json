@@ -1,6 +1,6 @@
 {
   "schema_version": "2.6",
-  "generated_at": "2026-10-05T20:09:14Z",
+  "generated_at": "2026-10-05T22:08:39Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -126166,6 +126166,80 @@
         "dockerfile_sha256": "f68e69d143a33bb4221f11e706eaf7117e636bf68312c364edacf47ff7c2814b",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:33eae4209fa2ff9bafe30bea9794387ef48b7fd421c8b29ffc5a71251fadb6a0",
         "toolchain_sha256": "71ffaf12c0d8a317d301a236389483a12045064c088c213dd481eeab295e603d",
+        "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
+        "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
+      }
+    },
+    {
+      "tc_id": "openrisc-musl-stable-2021.11-4",
+      "triple": "or1k-buildroot-linux-musl",
+      "gcc_version": "10.3.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-or1k.so.1",
+        "version": "1.2.2"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-or1k.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "OpenRISC 1000"
+      },
+      "isa": "",
+      "float_abi": "soft",
+      "pie_default": true,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
+      "sysroot_sonames": [
+        "libatomic.so.1",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "cpu": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "fallback"
+      },
+      "kernel": {
+        "headers": "4.9.291",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "openrisc",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "DYN (Shared object file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/openrisc-musl-stable-2021.11-4/Dockerfile",
+        "dockerfile_sha256": "802e70159a06084f6cd7dd48b8c1b3d8787cc176cd9ee81b4cb54ab16ef066b1",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:95bd2d1c587c6e402407fbc4b3489ce1ddab74a10de6c20fe6ee943f1e6dd302",
+        "toolchain_sha256": "72fce2be59c18a5b3a02f51ebb83119a0f3d29ab7f2d5cd560038ff6f94f137a",
         "probe_version": "7ab3edcf4abff36c82116d5ce81a4feb606ed11f7123204fb04a94167e051d78",
         "normalize_version": "551e7c54453e5816c19f7fc5c57c33bf3a34e30417ddcf3d140a3c950575d168"
       }
