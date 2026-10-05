@@ -285,7 +285,9 @@ def normalize(raw, tc_id):
         parts = [macro("__GLIBC__", feat), macro("__GLIBC_MINOR__", feat)]
         libc_ver = ".".join(parts) if all(parts) else _summary_version(summary, "glibc")
     elif kind == "musl":
-        libc_ver = _summary_version(summary, "musl")
+        # some SDKs ship an empty summary.csv (2021.05-1); then the version string in libc.so
+        mv = g("musl_version").split()
+        libc_ver = _summary_version(summary, "musl") or (mv[0] if len(mv) == 1 else "")
     else:
         libc_ver = ""
 
@@ -304,12 +306,14 @@ def normalize(raw, tc_id):
     time_bits = 64 if ok("time_t.8") else 32
 
     # C programs only: C++ runtimes are normally linked statically for these targets (cxx_ok covers C++)
-    c_corpus = [n for n in corpus if n != "cxx"]
+    c_corpus = [n for n in corpus if n not in ("cxx", "fpabi")]     # fpabi only probes the float ABI
     needed_corpus = sorted({s for n in c_corpus for s in _needed(g(f"corpus.{n}.d"))} | set(_needed(dyn)))
     has_hash, has_gnu = bool(re.search(r"\(HASH\)", dyn)), bool(re.search(r"\(GNU_HASH\)", dyn))
     m = re.search(r"^[ \t]*-march=\S*[ \t]+(\S*)[ \t]*$", g("gcc_target"), re.M)   # empty on some arches
 
-    family, arch_abi, float_abi = _decode_arch(machine, flags, attrs, cls == "ELF64", g("gcc_target"), g("triple"))
+    # the baseline program passes no floats; fpabi does, so its attributes carry the float ABI where hello's can't
+    fp_attrs = attrs + "\n" + g("corpus.fpabi.A")
+    family, arch_abi, float_abi = _decode_arch(machine, flags, fp_attrs, cls == "ELF64", g("gcc_target"), g("triple"))
 
     # Nothing compiled: every field derived from compiler output below is a default, not a fact.
     compiled = any(ok(k) for k in ("link_dyn", "link_static", "time_t.4", "time_t.8"))

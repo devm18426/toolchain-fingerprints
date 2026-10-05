@@ -139,6 +139,25 @@ class Normalize(unittest.TestCase):
         self.assertEqual((r["hash_style"], r["march"], r["float_abi"], r["pie_default"]), ("sysv", "mips32", "hard", True))
         self.assertNotIn("glibc", r)
 
+    def test_float_abi_from_the_fpabi_program(self):
+        # PowerPC hello has no Tag_GNU_Power_ABI_FP; the fpabi program, which passes floats, does
+        hdr = Normalize.RAW["dyn.h"].replace("MIPS R3000", "PowerPC").replace("0x50001007, noreorder, pic, cpic, o32, mips32", "0x0")
+        raw = dict(Normalize.RAW, **{"dyn.h": hdr, "dyn.A": "", "corpus.fpabi.link.rc": "0",
+                                     "corpus.fpabi.d": " (NEEDED) Shared library: [libm.so.6]\n",
+                                     "corpus.fpabi.A": "Attribute Section: gnu\n  Tag_GNU_Power_ABI_FP: Soft float\n"})
+        r = normalize(raw, "t")
+        self.assertEqual((r["float_abi"], r["arch"]["abi"]["fp"]), ("soft", "soft float"))
+        self.assertNotIn("libm.so.6", r["needed_corpus"])        # fpabi only probes the float ABI
+
+    def test_musl_version_from_libc_when_the_summary_is_empty(self):
+        raw = dict(Normalize.RAW, **{"triple": "mips-buildroot-linux-musl", "uclibc_config": "", "features_h": "",
+                                     "dyn.l": "      [Requesting program interpreter: /lib/ld-musl-mips.so.1]\n",
+                                     "summary": "", "musl_version": "1.2.2\n"})
+        self.assertEqual(normalize(raw, "t")["libc"]["version"], "1.2.2")
+        summary = '"musl","1.2.5","MIT","COPYRIGHT","musl-1.2.5.tar.gz"\n'
+        self.assertEqual(normalize(dict(raw, summary=summary), "t")["libc"]["version"], "1.2.5")   # summary first
+        self.assertEqual(normalize(dict(raw, musl_version="1.2.2\n9.4.0\n"), "t")["libc"]["version"], "")  # ambiguous
+
     def test_nothing_compiled_is_marked_compile_failed(self):
         self.assertEqual(normalize(self.RAW, "t")["probe"], {"status": "ok", "error": ""})
         raw = dict(self.RAW, **{k + ".rc": "1" for k in ("link_dyn", "link_static", "time_t.4", "time_t.8")},
