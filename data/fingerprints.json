@@ -1,6 +1,6 @@
 {
   "schema_version": "2.5",
-  "generated_at": "2026-10-05T00:24:15Z",
+  "generated_at": "2026-10-05T00:30:11Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -33923,6 +33923,70 @@
       }
     },
     {
+      "tc_id": "armv7m-uclibc-bleeding-edge-2018.07-2",
+      "triple": "arm-buildroot-uclinux-uclibcgnueabi",
+      "gcc_version": "8.1.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "",
+        "version": "1.0.30"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": ""
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [],
+      "sysroot_sonames": [],
+      "cxx_ok": true,
+      "march": "armv7e-m",
+      "hash_style": "none",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.14.55",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "bflt"
+      },
+      "arch": {
+        "family": "unknown",
+        "abi": {}
+      },
+      "raw": {
+        "class": "",
+        "data": "",
+        "type": "",
+        "flags": "",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/armv7m-uclibc-bleeding-edge-2018.07-2/Dockerfile",
+        "dockerfile_sha256": "c81415b973ea33e3995f7cea1b94ae4fc9b53aec98083d4022bf90551fa48f15",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:3debdd8d4591e635a2bb71d7d26ccf4b759afedb485275f13466768efd541486",
+        "toolchain_sha256": "197941fe101c637c62df2942079f5ded4ed81596a97cea5987d60feaf1b2724c",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
       "tc_id": "armv7m-uclibc-bleeding-edge-2018.07-3",
       "triple": "arm-buildroot-uclinux-uclibcgnueabi",
       "gcc_version": "8.2.0",
@@ -37407,6 +37471,70 @@
         "dockerfile_sha256": "80e78a6899c8495e92240137ff57b0e2a23b0eadfd1d1a8edde146df0d57618f",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:1d4e49ab05620cb792d94d114c9adc1bdc21ac79a6a4ed421cde3f8233225d83",
         "toolchain_sha256": "d476294362bdd9007aa3cad9bde3de797624d1912189ff7c161569d3de21c5f3",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "m68k-coldfire-uclibc-bleeding-edge-2018.07-2",
+      "triple": "m68k-buildroot-uclinux-uclibc",
+      "gcc_version": "8.1.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "",
+        "version": "1.0.30"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": ""
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [],
+      "sysroot_sonames": [],
+      "cxx_ok": true,
+      "march": "68000",
+      "hash_style": "none",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.14.55",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "bflt"
+      },
+      "arch": {
+        "family": "unknown",
+        "abi": {}
+      },
+      "raw": {
+        "class": "",
+        "data": "",
+        "type": "",
+        "flags": "",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/m68k-coldfire-uclibc-bleeding-edge-2018.07-2/Dockerfile",
+        "dockerfile_sha256": "26b1ba166eef1cd7d5f9d3265432601d19c23564624f761f2cc8e184770d64d5",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:208e8655fa5b9f7bb5926bd614ba18afd6dfabb712b77865739a9b8cb9cc472a",
+        "toolchain_sha256": "ea8f9ac9ea1d2a413a9bf8eb44b6121a79f19ad2ca17b22770f77038ef9f68d2",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
