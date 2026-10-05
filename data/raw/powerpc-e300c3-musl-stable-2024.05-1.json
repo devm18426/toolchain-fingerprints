@@ -71,6 +71,8 @@
   "link_static.rc": "0\n",
   "linux_version_h": "#define LINUX_VERSION_CODE 267263\n#define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))\n",
   "linux_version_h.rc": "0\n",
+  "musl_version": "1.2.5\n",
+  "musl_version.rc": "0\n",
   "summary": "\"musl\",\"1.2.5\",\"MIT\",\"COPYRIGHT\",\"musl-1.2.5.tar.gz\",\"http://musl.libc.org/releases\",\"linux-headers [GPL-2.0] musl-compat-headers [BSD-3-Clause, Public Domain or CC0] skeleton-init-common [unknown] skeleton-init-none [unknown]\"\n\"linux-headers\",\"4.19.315\",\"GPL-2.0\",\"\",\"linux-4.19.315.tar.xz\",\"https://cdn.kernel.org/pub/linux/kernel/v4.x\",\"skeleton-init-common [unknown] skeleton-init-none [unknown]\"\n",
   "summary.rc": "0\n",
   "sysroot": "/opt/tc/powerpc-buildroot-linux-musl/sysroot\n",
