@@ -1,6 +1,6 @@
 {
   "schema_version": "2.5",
-  "generated_at": "2026-10-05T00:12:45Z",
+  "generated_at": "2026-10-05T00:14:54Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -135236,6 +135236,84 @@
       }
     },
     {
+      "tc_id": "x86-i686-uclibc-stable-2022.08-1",
+      "triple": "i686-buildroot-linux-uclibc",
+      "gcc_version": "11.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.42"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "little",
+        "machine": "Intel 80386"
+      },
+      "isa": "",
+      "float_abi": "hard",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libgomp.so.1",
+        "libquadmath.so.0",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.9.327",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "x86",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/x86-i686-uclibc-stable-2022.08-1/Dockerfile",
+        "dockerfile_sha256": "cfde81619c4a8b72beaa559157be9acfb383eae494c1245f1104c6c53071a625",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:125c2f8e1a98e230ae619709a3ad0b8a5e53dceb551a315acbbdb5673150d58c",
+        "toolchain_sha256": "a35b1f2d4ef5ce829d2211efb4735196c0c7dcb451d5d40089c126e8b8e6c02e",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
       "tc_id": "x86-i686-uclibc-stable-2026.08-1",
       "triple": "i686-buildroot-linux-uclibc",
       "gcc_version": "15.3.0",
@@ -135920,6 +135998,83 @@
       }
     },
     {
+      "tc_id": "xtensa-lx60-uclibc-bleeding-edge-2022.08-1",
+      "triple": "xtensa-buildroot-linux-uclibc",
+      "gcc_version": "12.2.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.42"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "little",
+        "machine": "Tensilica Xtensa Processor"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libgomp.so.1",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "5.4.212",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "xtensa",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x300",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/xtensa-lx60-uclibc-bleeding-edge-2022.08-1/Dockerfile",
+        "dockerfile_sha256": "c52291c9f8cacb7e69182bb5683ea31dca9dc56d02067ccc1a22d851a24d2f1f",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:e1545dd96c0a17d8b78c82f1b4fc668bd99f0ec0cd7e043145363d0b3cd1b9d1",
+        "toolchain_sha256": "a822972e8865b4bc9ad1a077c38fbe095c89ea018364411240da1183fcf7c2ad",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
       "tc_id": "xtensa-lx60-uclibc-bleeding-edge-2026.08-1",
       "triple": "xtensa-buildroot-linux-uclibc",
       "gcc_version": "16.2.0",
@@ -136370,6 +136525,83 @@
         "dockerfile_sha256": "295e8aaa4c59dbec5d23c8c419f866b9f34abd510481bb0642b45995e6aa2f81",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:fdf0fbb41cf942f36204ded8e62c9c133e9393d0106413a595156b20c29945b9",
         "toolchain_sha256": "2fd9dc2d1ec8a167ae3c353682bc4d166f25a7db1c1b889e3058bc644bd3f92c",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "xtensa-lx60-uclibc-stable-2022.08-1",
+      "triple": "xtensa-buildroot-linux-uclibc",
+      "gcc_version": "11.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.42"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "little",
+        "machine": "Tensilica Xtensa Processor"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": true,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libgomp.so.1",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.9.327",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "xtensa",
+        "abi": {}
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, little endian",
+        "type": "DYN (Position-Independent Executable file)",
+        "flags": "0x300",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/xtensa-lx60-uclibc-stable-2022.08-1/Dockerfile",
+        "dockerfile_sha256": "062a4e83102cb3281b2f534f096e3a206e7a59167c9dc02b86dae454be93f7e0",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:2e2ffeede355e9e70a8e776b181a879c704e9303f3167f43f3e80e19e440b293",
+        "toolchain_sha256": "35df9b38a5b424cc7d18dd7d382a7962c813dcd19b0c6e9887e3fbb4e3a6d44d",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
