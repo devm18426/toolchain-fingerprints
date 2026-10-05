@@ -66,13 +66,31 @@ jobs:
           PY
           python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
-          rows = json.load(open("status.json"))["toolchains"]
+          from collections import Counter
+          st = json.load(open("status.json"))
+          rows, batch = st["toolchains"], st["stale"][:200]   # same batch as above
+          n = Counter(r["state"] for r in rows)
           print("### Toolchain status")
           print()
-          print("| toolchain | state | image |")
-          print("|---|---|---|")
-          for r in rows:
-              print(f"| {r['tc_id']} | {r['state']} {r['reason']} | `{r['image']}` |")
+          print(f"{len(rows)} toolchains: " + ", ".join(f"{n[k]} {k}" for k in sorted(n)) + ".")
+          if batch:
+              print()
+              print(f"Building and probing {len(batch)} in this run:")
+              print()
+              print("| toolchain | reason | image |")
+              print("|---|---|---|")
+              for r in rows:
+                  if r["tc_id"] in batch:
+                      print(f"| {r['tc_id']} | {r['reason']} | `{r['image']}` |")
+              if len(st["stale"]) > len(batch):
+                  print()
+                  print(f"{len(st['stale']) - len(batch)} more stale toolchains wait for the next run.")
+          for title, ids in (("Re-derived from data/raw/ (normalizer changed)", st["renormalize"]),
+                             ("Refused (unpinned inputs, see gen.py lint)", [r["tc_id"] for r in rows if r["state"] == "refused"]),
+                             ("Orphan records (no Dockerfile)", st["orphans"])):
+              if ids:
+                  print()
+                  print(f"{title}: " + ", ".join(ids))
           PY
 
   build:
