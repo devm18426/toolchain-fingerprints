@@ -1,6 +1,6 @@
 {
   "schema_version": "2.5",
-  "generated_at": "2026-10-05T01:08:49Z",
+  "generated_at": "2026-10-05T01:13:11Z",
   "toolchains": [
     {
       "tc_id": "aarch64-glibc-bleeding-edge-2017.11-1",
@@ -97930,6 +97930,109 @@
       }
     },
     {
+      "tc_id": "powerpc-440fp-glibc-bleeding-edge-2020.08-2",
+      "triple": "powerpc-buildroot-linux-gnu",
+      "gcc_version": "10.2.0",
+      "libc": {
+        "kind": "glibc",
+        "soname": "libc.so.6",
+        "version": "2.31"
+      },
+      "ldso": {
+        "soname": "ld.so.1"
+      },
+      "interp": "/lib/ld.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "PowerPC"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld.so.1",
+        "libBrokenLocale.so.1",
+        "libSegFault.so",
+        "libanl.so.1",
+        "libatomic.so.1",
+        "libc.so.6",
+        "libcrypt.so.1",
+        "libdl.so.2",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libm.so.6",
+        "libmemusage.so",
+        "libnsl.so.1",
+        "libnss_compat.so.2",
+        "libnss_db.so.2",
+        "libnss_dns.so.2",
+        "libnss_files.so.2",
+        "libnss_hesiod.so.2",
+        "libpcprofile.so",
+        "libpthread.so.0",
+        "libresolv.so.2",
+        "librt.so.1",
+        "libstdc++.so.6",
+        "libthread_db.so.1",
+        "libutil.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "required"
+      },
+      "kernel": {
+        "headers": "5.4.83",
+        "min": "5.4.0"
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "glibc": {
+        "requires": "2.29",
+        "provides": "2.30"
+      },
+      "arch": {
+        "family": "power",
+        "abi": {
+          "fp": "unspecified"
+        }
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/powerpc-440fp-glibc-bleeding-edge-2020.08-2/Dockerfile",
+        "dockerfile_sha256": "bfac7a850bf1dbce91fbb79e6300254b3a1de0cf60a83be3246cadf4b7992358",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:6fff1e7037399831bd8ed71e34e169f33ff4576066ca3b51b9f53d45465f1ac6",
+        "toolchain_sha256": "7b7c2f66ccd3d44cd8a829b5879277be9cfb17f34a26d5055b29a6bab40ff9df",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
       "tc_id": "powerpc-440fp-glibc-bleeding-edge-2021.11-1",
       "triple": "powerpc-buildroot-linux-gnu",
       "gcc_version": "11.2.0",
@@ -98344,6 +98447,109 @@
       }
     },
     {
+      "tc_id": "powerpc-440fp-glibc-stable-2020.08-2",
+      "triple": "powerpc-buildroot-linux-gnu",
+      "gcc_version": "9.3.0",
+      "libc": {
+        "kind": "glibc",
+        "soname": "libc.so.6",
+        "version": "2.31"
+      },
+      "ldso": {
+        "soname": "ld.so.1"
+      },
+      "interp": "/lib/ld.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "PowerPC"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [
+        "libc.so.6"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libpthread.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld.so.1",
+        "libBrokenLocale.so.1",
+        "libSegFault.so",
+        "libanl.so.1",
+        "libatomic.so.1",
+        "libc.so.6",
+        "libcrypt.so.1",
+        "libdl.so.2",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libm.so.6",
+        "libmemusage.so",
+        "libnsl.so.1",
+        "libnss_compat.so.2",
+        "libnss_db.so.2",
+        "libnss_dns.so.2",
+        "libnss_files.so.2",
+        "libnss_hesiod.so.2",
+        "libpcprofile.so",
+        "libpthread.so.0",
+        "libresolv.so.2",
+        "librt.so.1",
+        "libstdc++.so.6",
+        "libthread_db.so.1",
+        "libutil.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.9.248",
+        "min": "4.9.0"
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "glibc": {
+        "requires": "2.29",
+        "provides": "2.30"
+      },
+      "arch": {
+        "family": "power",
+        "abi": {
+          "fp": "unspecified"
+        }
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/powerpc-440fp-glibc-stable-2020.08-2/Dockerfile",
+        "dockerfile_sha256": "f6d86cfaf88eeb76c0cc86dc125cd10a6975ef01bd3d5a2877b3b581b3991d92",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:c13efb746c0e02b642d186b86499ead7b6d758afd9a08b0ff717363fb6012121",
+        "toolchain_sha256": "ae7b3d06090dfcf54b1e3b4bd4fda9ae5aaaf34aba9118820e6e9d8f1b70c0c4",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
       "tc_id": "powerpc-440fp-glibc-stable-2021.11-1",
       "triple": "powerpc-buildroot-linux-gnu",
       "gcc_version": "10.3.0",
@@ -98729,6 +98935,81 @@
       }
     },
     {
+      "tc_id": "powerpc-440fp-musl-bleeding-edge-2020.08-2",
+      "triple": "powerpc-buildroot-linux-musl",
+      "gcc_version": "10.2.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-powerpc.so.1",
+        "version": "1.2.0"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-powerpc.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "PowerPC"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
+      "sysroot_sonames": [
+        "libatomic.so.1",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "fallback"
+      },
+      "kernel": {
+        "headers": "5.4.83",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "power",
+        "abi": {
+          "fp": "unspecified"
+        }
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/powerpc-440fp-musl-bleeding-edge-2020.08-2/Dockerfile",
+        "dockerfile_sha256": "0cb2bec8ee555755e479a8c218d3122ad21a91705cdc38cdfdf945ea3b0abb23",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:52531eea1e3ce29650d95fdce060b9d159d9c29396028986be3825a6e2ad2712",
+        "toolchain_sha256": "a6def102659538e3e5838bf4267cd33486d795db753a7109b5e413499ef5df89",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
       "tc_id": "powerpc-440fp-musl-bleeding-edge-2021.11-1",
       "triple": "powerpc-buildroot-linux-musl",
       "gcc_version": "11.2.0",
@@ -99032,6 +99313,81 @@
         "dockerfile_sha256": "feabb902dd7286d5fc77d46a9b8246f1add4306feb16be3167425bf9df81a9fd",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:64d86854430e7e6c72d13b49cd117f38dc577d69dd99247c576b65cdbd18dbae",
         "toolchain_sha256": "4658f631506b7d73a7f6816caa6b8e052d5d203e14a77bd6904af8ee9ebf2868",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "powerpc-440fp-musl-stable-2020.08-2",
+      "triple": "powerpc-buildroot-linux-musl",
+      "gcc_version": "9.3.0",
+      "libc": {
+        "kind": "musl",
+        "soname": "ld-musl-powerpc.so.1",
+        "version": "1.2.0"
+      },
+      "ldso": {
+        "soname": ""
+      },
+      "interp": "/lib/ld-musl-powerpc.so.1",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "PowerPC"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [
+        "libc.so"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so"
+      ],
+      "sysroot_sonames": [
+        "libatomic.so.1",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 64,
+        "time64_syscalls": "fallback"
+      },
+      "kernel": {
+        "headers": "4.9.248",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "power",
+        "abi": {
+          "fp": "unspecified"
+        }
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/powerpc-440fp-musl-stable-2020.08-2/Dockerfile",
+        "dockerfile_sha256": "c1e0c8c0e9518278e3c673cf60c79364d472eb65fb3d3c72af1fff894c239862",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:a5d53e288882070612570bc135336a472c8f50afa32ec635d8c14f766975b294",
+        "toolchain_sha256": "76de0310078633ff34654c8c54d7e80a609c58521a7f2a8041ae4a574889d38a",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
@@ -99342,6 +99698,84 @@
         "dockerfile_sha256": "c246dcf1a708e061a7b133b3f1c360563d04195d7d4cbed84d2f1c1fe71215a8",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:4a86219663475daebe6e19703becafdc3d369dd3bfed5d8f5b2b4118afd2ad3b",
         "toolchain_sha256": "e6570a1683260620bec129e849f68488e59460a99158c5c3e48b30432ec043c7",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "powerpc-440fp-uclibc-bleeding-edge-2020.08-2",
+      "triple": "powerpc-buildroot-linux-uclibc",
+      "gcc_version": "10.2.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.34"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "PowerPC"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "5.4.83",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "power",
+        "abi": {
+          "fp": "unspecified"
+        }
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/powerpc-440fp-uclibc-bleeding-edge-2020.08-2/Dockerfile",
+        "dockerfile_sha256": "78f434f97465204c99051f37f1e9554754e0a3c8ccb1f71bbaf3bc965a429296",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:de7eb842a37bda5262da29674429ec89eb2564966e7aa74cd4b25677f60c609c",
+        "toolchain_sha256": "abbe38fc92a71d568c08452f99fe3470e5ded9a666c6829d9104fcf06b984503",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
@@ -99662,6 +100096,84 @@
         "dockerfile_sha256": "ae9ff21bee4e718b5bd9312722bb9f9367fba9ea6241d638d3f20bcd306edd3c",
         "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:c1218f7d298ef0ae22cedf723de08ce4a8e8aa5ba11d69650903754755e05d66",
         "toolchain_sha256": "ed632b806c8e8fa77e0d1f43d57ae169629ce94e4783044771ee60775001d207",
+        "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
+        "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
+      }
+    },
+    {
+      "tc_id": "powerpc-440fp-uclibc-stable-2020.08-2",
+      "triple": "powerpc-buildroot-linux-uclibc",
+      "gcc_version": "9.3.0",
+      "libc": {
+        "kind": "uclibc",
+        "soname": "libc.so.0",
+        "version": "1.0.34"
+      },
+      "ldso": {
+        "soname": "ld-uClibc.so.1"
+      },
+      "interp": "/lib/ld-uClibc.so.0",
+      "elf": {
+        "class": "32",
+        "endian": "big",
+        "machine": "PowerPC"
+      },
+      "isa": "",
+      "float_abi": "unknown",
+      "pie_default": false,
+      "needed": [
+        "libc.so.0"
+      ],
+      "dynamic_ok": true,
+      "static_ok": true,
+      "needed_corpus": [
+        "libc.so.0"
+      ],
+      "sysroot_sonames": [
+        "ld-uClibc.so.1",
+        "libatomic.so.1",
+        "libc.so.0",
+        "libgcc_s.so.1",
+        "libgfortran.so.5",
+        "libstdc++.so.6",
+        "libthread_db.so.1"
+      ],
+      "cxx_ok": true,
+      "march": "",
+      "hash_style": "both",
+      "time": {
+        "time_t_bits": 32,
+        "time64_syscalls": "none"
+      },
+      "kernel": {
+        "headers": "4.9.248",
+        "min": ""
+      },
+      "probe": {
+        "status": "ok",
+        "error": ""
+      },
+      "binary": {
+        "format": "elf"
+      },
+      "arch": {
+        "family": "power",
+        "abi": {
+          "fp": "unspecified"
+        }
+      },
+      "raw": {
+        "class": "ELF32",
+        "data": "2's complement, big endian",
+        "type": "EXEC (Executable file)",
+        "flags": "0x0",
+        "fp_abi": ""
+      },
+      "provenance": {
+        "dockerfile": "toolchains/powerpc-440fp-uclibc-stable-2020.08-2/Dockerfile",
+        "dockerfile_sha256": "b6884b8caed2e8477b972dbab6ba79ab14ec0d85d86062f4afa1a7b89f985835",
+        "image_digest": "ghcr.io/devm18426/toolchain-fingerprints@sha256:776ad8a687a6cc6a99ac63c0aa99aea6b8a72b2891abc472418dbd61c6df8565",
+        "toolchain_sha256": "d4346ce563ddfbd4946b2dfbc766cafebbf4b09488dc8b398ab8bb242bac9268",
         "probe_version": "3a384e26c7d349357fe4aba42cf69c9f5f489e79ce1c86ca7f7825dc90d055c4",
         "normalize_version": "764bc62cdd97ba6ca62f51b0175fbd21abd7f4bd3f670efc51353a09373e7d7a"
       }
